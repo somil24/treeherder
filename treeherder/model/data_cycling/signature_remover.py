@@ -12,6 +12,7 @@ from .email_service import EmailService
 
 logger = logging.getLogger(__name__)
 
+# TODO: find a better place for this
 RECEIVER_TEAM_EMAIL = "perftest-alerts@mozilla.com"
 
 

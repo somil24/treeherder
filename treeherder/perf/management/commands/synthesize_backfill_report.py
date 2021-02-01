@@ -16,8 +16,7 @@ from treeherder.perf.exceptions import MaxRuntimeExceeded
 from treeherder.perf.secretary_tool import SecretaryTool
 from treeherder.perf.models import PerformanceFramework
 from treeherder.perf.perf_sheriff_bot import PerfSheriffBot
-from treeherder.services.taskcluster import DEFAULT_ROOT_URL as root_url
-from treeherder.services.taskcluster import TaskclusterModel
+from treeherder.services.taskcluster import DEFAULT_ROOT_URL as root_url, TaskclusterModelProxy
 
 logger = logging.getLogger(__name__)
 
@@ -63,12 +62,16 @@ class Command(BaseCommand):
         backfill_context_fetcher = IdentifyAlertRetriggerables(
             max_data_points=5, time_interval=days_to_lookup
         )
+        # TODO: extract out the notification service
+        taskcluster = TaskclusterModelProxy(root_url, client_id, access_token)
         report_maintainer = BackfillReportMaintainer(alerts_picker, backfill_context_fetcher)
-        backfill_tool = BackfillTool(TaskclusterModel(root_url, client_id, access_token))
+        backfill_tool = BackfillTool(taskcluster)
         secretary_tool = SecretaryTool()
 
         try:
-            perf_sheriff_bot = PerfSheriffBot(report_maintainer, backfill_tool, secretary_tool)
+            perf_sheriff_bot = PerfSheriffBot(
+                report_maintainer, backfill_tool, secretary_tool, taskcluster
+            )
             perf_sheriff_bot._report(since, frameworks, repositories)
         except MaxRuntimeExceeded as ex:
             logging.info(ex)

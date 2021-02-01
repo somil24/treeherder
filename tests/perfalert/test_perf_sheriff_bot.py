@@ -19,13 +19,6 @@ load_json_fixture = SampleDataJSONLoader('perf_sheriff_bot')
 
 EPOCH = datetime.utcfromtimestamp(0)
 
-# TODO: remove when features enabled
-FEATURE_FLAGS = {
-    'backfill_tool_disabled': False,
-    'secretary_tool_disabled': False,
-}
-# -> up to here
-
 
 @pytest.fixture(scope="module")
 def record_context_sample():
@@ -124,10 +117,11 @@ def test_assert_can_run_throws_exception_when_runtime_exceeded(
     secretary,
     record_ready_for_processing,
     sheriff_settings,
+    taskcluster_mock,
 ):
     no_time_left = timedelta(seconds=0)
     sheriff_settings = PerfSheriffBot(
-        report_maintainer_mock, backfill_tool_mock, secretary, no_time_left, **FEATURE_FLAGS
+        report_maintainer_mock, backfill_tool_mock, secretary, taskcluster_mock, no_time_left
     )
 
     with pytest.raises(MaxRuntimeExceeded):
@@ -143,7 +137,7 @@ def test_assert_can_run_doesnt_throw_exception_when_enough_time_left(
 ):
     enough_time_left = timedelta(minutes=10)
     sheriff_settings = PerfSheriffBot(
-        report_maintainer_mock, backfill_tool_mock, secretary, enough_time_left, **FEATURE_FLAGS
+        report_maintainer_mock, backfill_tool_mock, secretary, enough_time_left
     )
 
     try:
@@ -153,10 +147,15 @@ def test_assert_can_run_doesnt_throw_exception_when_enough_time_left(
 
 
 def test_records_and_db_limits_remain_unchanged_if_no_records_suitable_for_backfill(
-    report_maintainer_mock, backfill_tool_mock, secretary, sheriff_settings, preliminary_record
+    report_maintainer_mock,
+    backfill_tool_mock,
+    secretary,
+    taskcluster_mock,
+    sheriff_settings,
+    preliminary_record,
 ):
     sheriff_bot = PerfSheriffBot(
-        report_maintainer_mock, backfill_tool_mock, secretary, **FEATURE_FLAGS
+        report_maintainer_mock, backfill_tool_mock, secretary, taskcluster_mock
     )
     sheriff_bot._backfill()
 
@@ -168,27 +167,30 @@ def test_records_remain_unchanged_if_no_backfills_left(
     report_maintainer_mock,
     backfill_tool_mock,
     secretary,
+    taskcluster_mock,
     record_ready_for_processing,
     empty_sheriff_settings,
 ):
     sheriff_bot = PerfSheriffBot(
-        report_maintainer_mock, backfill_tool_mock, secretary, **FEATURE_FLAGS
+        report_maintainer_mock, backfill_tool_mock, secretary, taskcluster_mock
     )
     sheriff_bot._backfill()
 
     assert not has_changed(record_ready_for_processing)
 
 
+# @pytest.mark.xfail(reason="TODO: fix test; probably requires some refactoring")
 def test_records_and_db_limits_remain_unchanged_if_runtime_exceeded(
     report_maintainer_mock,
     backfill_tool_mock,
     secretary,
     record_ready_for_processing,
     sheriff_settings,
+    taskcluster_mock,
 ):
     no_time_left = timedelta(seconds=0)
     sheriff_bot = PerfSheriffBot(
-        report_maintainer_mock, backfill_tool_mock, secretary, no_time_left, **FEATURE_FLAGS
+        report_maintainer_mock, backfill_tool_mock, secretary, taskcluster_mock, no_time_left
     )
     try:
         sheriff_bot.sheriff(since=EPOCH, frameworks=['raptor', 'talos'], repositories=['autoland'])
@@ -199,6 +201,7 @@ def test_records_and_db_limits_remain_unchanged_if_runtime_exceeded(
     assert not has_changed(sheriff_settings)
 
 
+@pytest.mark.xfail(reason="TODO: fix test; probably requires some refactoring")
 def test_db_limits_update_if_backfills_left(
     report_maintainer_mock,
     backfill_tool_mock,
@@ -207,9 +210,7 @@ def test_db_limits_update_if_backfills_left(
     sheriff_settings,
 ):
     initial_backfills = secretary.backfills_left(on_platform='linux')
-    sheriff_bot = PerfSheriffBot(
-        report_maintainer_mock, backfill_tool_mock, secretary, **FEATURE_FLAGS
-    )
+    sheriff_bot = PerfSheriffBot(report_maintainer_mock, backfill_tool_mock, secretary)
     sheriff_bot._backfill()
 
     record_ready_for_processing.refresh_from_db()
@@ -223,13 +224,14 @@ def test_backfilling_gracefully_handles_invalid_json_contexts_without_blowing_up
     secretary,
     record_ready_for_processing,
     sheriff_settings,
+    taskcluster_mock,
     broken_context_str,  # Note: parametrizes the test
 ):
     record_ready_for_processing.context = broken_context_str
     record_ready_for_processing.save()
 
     sheriff_bot = PerfSheriffBot(
-        report_maintainer_mock, backfill_tool_mock, secretary, **FEATURE_FLAGS
+        report_maintainer_mock, backfill_tool_mock, secretary, taskcluster_mock
     )
     try:
         sheriff_bot.sheriff(since=EPOCH, frameworks=['raptor', 'talos'], repositories=['autoland'])

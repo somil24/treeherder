@@ -12,7 +12,7 @@ from treeherder.model.data_cycling.removal_strategies import RemovalStrategy
 from treeherder.model.models import Job, JobType, JobGroup, Machine
 from treeherder.perf.exceptions import NoDataCyclingAtAll, MaxRuntimeExceeded
 from treeherder.perf.models import PerformanceSignature, PerformanceAlertSummary
-from treeherder.services.taskcluster import TaskclusterModel, DEFAULT_ROOT_URL as root_url
+from treeherder.services.taskcluster import DEFAULT_ROOT_URL as root_url, TaskclusterModelImpl
 from .max_runtime import MaxRuntime
 from .signature_remover import PublicSignatureRemover
 from .utils import has_valid_explicit_days
@@ -134,7 +134,7 @@ class PerfherderCycler(DataCycler):
         # remove any signatures which are
         # no longer associated with a job
         signatures = PerformanceSignature.objects.filter(last_updated__lte=self.max_timestamp)
-        tc_model = TaskclusterModel(
+        tc_model = TaskclusterModelImpl(
             root_url, client_id=settings.NOTIFY_CLIENT_ID, access_token=settings.NOTIFY_ACCESS_TOKEN
         )
         signatures_remover = PublicSignatureRemover(timer=self.timer, taskcluster_model=tc_model)
