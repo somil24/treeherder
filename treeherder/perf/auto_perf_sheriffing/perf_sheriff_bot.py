@@ -9,11 +9,12 @@ from taskcluster.helper import TaskclusterConfig
 
 from treeherder.model.data_cycling.signature_remover import RECEIVER_TEAM_EMAIL
 from treeherder.model.models import JobType, Job
-from treeherder.perf.alerts import BackfillRecord, BackfillReport, BackfillReportMaintainer
-from treeherder.perf.backfill_tool import BackfillTool
+from treeherder.perf.models import BackfillRecord, BackfillReport
+from treeherder.perf.auto_perf_sheriffing.backfill_reports import BackfillReportMaintainer
+from treeherder.perf.auto_perf_sheriffing.backfill_tool import BackfillTool
 from treeherder.perf.email import BackfillNotification
 from treeherder.perf.exceptions import CannotBackfill, MaxRuntimeExceeded
-from treeherder.perf.secretary_tool import SecretaryTool
+from treeherder.perf.auto_perf_sheriffing.secretary_tool import SecretaryTool
 from treeherder.services.taskcluster import TaskclusterModel
 
 logger = logging.getLogger(__name__)

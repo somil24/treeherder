@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from treeherder.perf.alerts import AlertsPicker
+from treeherder.perf.auto_perf_sheriffing.backfill_reports import AlertsPicker
 from treeherder.perf.models import PerformanceAlert
 
 

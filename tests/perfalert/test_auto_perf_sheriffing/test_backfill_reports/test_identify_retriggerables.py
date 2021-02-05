@@ -5,7 +5,7 @@ from operator import itemgetter as get_key
 import pytest
 
 from treeherder.model.models import Job
-from treeherder.perf.alerts import IdentifyAlertRetriggerables
+from treeherder.perf.auto_perf_sheriffing.backfill_reports import IdentifyAlertRetriggerables
 from treeherder.perf.models import PerformanceDatum
 
 NON_RETRIGGERABLE_JOB_ID = 9

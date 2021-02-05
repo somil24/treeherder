@@ -7,7 +7,10 @@ from unittest.mock import Mock
 import pytest
 
 from treeherder.model.models import MachinePlatform, Option, OptionCollection
-from treeherder.perf.alerts import AlertsPicker, BackfillReportMaintainer
+from treeherder.perf.auto_perf_sheriffing.backfill_reports import (
+    AlertsPicker,
+    BackfillReportMaintainer,
+)
 from treeherder.perf.models import (
     BackfillRecord,
     BackfillReport,

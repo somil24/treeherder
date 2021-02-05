@@ -10,8 +10,8 @@ from django.db import models
 from treeherder.model.models import Job
 from treeherder.perf.exceptions import MaxRuntimeExceeded
 from treeherder.perf.models import BackfillRecord, BackfillReport, PerformanceSettings
-from treeherder.perf.perf_sheriff_bot import PerfSheriffBot
-from treeherder.perf.secretary_tool import SecretaryTool
+from treeherder.perf.auto_perf_sheriffing.perf_sheriff_bot import PerfSheriffBot
+from treeherder.perf.auto_perf_sheriffing.secretary_tool import SecretaryTool
 
 from tests.conftest import SampleDataJSONLoader
 
@@ -161,6 +161,11 @@ def test_records_and_db_limits_remain_unchanged_if_no_records_suitable_for_backf
 
     assert not has_changed(preliminary_record)
     assert not has_changed(sheriff_settings)
+
+
+def test_can_only_backfill_on_linux_platforms():
+    # TODO: implement
+    pass
 
 
 def test_records_remain_unchanged_if_no_backfills_left(

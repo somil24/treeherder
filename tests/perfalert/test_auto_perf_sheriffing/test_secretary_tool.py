@@ -6,7 +6,7 @@ from mock import Mock, patch
 
 from treeherder.config.settings import IS_WINDOWS
 from treeherder.perf.models import BackfillRecord, BackfillReport, PerformanceSettings
-from treeherder.perf.secretary_tool import SecretaryTool
+from treeherder.perf.auto_perf_sheriffing.secretary_tool import SecretaryTool
 from treeherder.utils import default_serializer
 
 

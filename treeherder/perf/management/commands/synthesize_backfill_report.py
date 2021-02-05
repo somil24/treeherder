@@ -6,16 +6,16 @@ from typing import List, Tuple
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from treeherder.perf.alerts import (
+from treeherder.perf.auto_perf_sheriffing.backfill_reports import (
     AlertsPicker,
-    BackfillReportMaintainer,
     IdentifyAlertRetriggerables,
+    BackfillReportMaintainer,
 )
-from treeherder.perf.backfill_tool import BackfillTool
+from treeherder.perf.auto_perf_sheriffing.backfill_tool import BackfillTool
 from treeherder.perf.exceptions import MaxRuntimeExceeded
-from treeherder.perf.secretary_tool import SecretaryTool
+from treeherder.perf.auto_perf_sheriffing.secretary_tool import SecretaryTool
 from treeherder.perf.models import PerformanceFramework
-from treeherder.perf.perf_sheriff_bot import PerfSheriffBot
+from treeherder.perf.auto_perf_sheriffing.perf_sheriff_bot import PerfSheriffBot
 from treeherder.services.taskcluster import DEFAULT_ROOT_URL as root_url, TaskclusterModelProxy
 
 logger = logging.getLogger(__name__)
@@ -63,6 +63,7 @@ class Command(BaseCommand):
             max_data_points=5, time_interval=days_to_lookup
         )
         # TODO: extract out the notification service
+        # TODO: could we extract these instantiations into a factory?
         taskcluster = TaskclusterModelProxy(root_url, client_id, access_token)
         report_maintainer = BackfillReportMaintainer(alerts_picker, backfill_context_fetcher)
         backfill_tool = BackfillTool(taskcluster)
@@ -72,7 +73,7 @@ class Command(BaseCommand):
             perf_sheriff_bot = PerfSheriffBot(
                 report_maintainer, backfill_tool, secretary_tool, taskcluster
             )
-            perf_sheriff_bot._report(since, frameworks, repositories)
+            perf_sheriff_bot.sheriff(since, frameworks, repositories)
         except MaxRuntimeExceeded as ex:
             logging.info(ex)
             logging.info('PerfSheriffBot went back to sleep')
