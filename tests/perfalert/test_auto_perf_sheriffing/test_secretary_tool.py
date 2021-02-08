@@ -5,42 +5,8 @@ import simplejson as json
 from mock import Mock, patch
 
 from treeherder.config.settings import IS_WINDOWS
-from treeherder.perf.models import BackfillRecord, BackfillReport, PerformanceSettings
+from treeherder.perf.models import BackfillRecord, PerformanceSettings
 from treeherder.perf.auto_perf_sheriffing.secretary_tool import SecretaryTool
-from treeherder.utils import default_serializer
-
-
-@pytest.fixture
-def performance_settings(db):
-    settings = {
-        "limits": 500,
-        "last_reset_date": datetime.utcnow(),
-    }
-    return PerformanceSettings.objects.create(
-        name="perf_sheriff_bot",
-        settings=json.dumps(settings, default=default_serializer),
-    )
-
-
-@pytest.fixture
-def expired_performance_settings(db):
-    settings = {
-        "limits": 500,
-        "last_reset_date": datetime.utcnow() - timedelta(days=30),
-    }
-    return PerformanceSettings.objects.create(
-        name="perf_sheriff_bot",
-        settings=json.dumps(settings, default=default_serializer),
-    )
-
-
-@pytest.fixture
-def create_record():
-    def _create_record(alert):
-        report = BackfillReport.objects.create(summary=alert.summary)
-        return BackfillRecord.objects.create(alert=alert, report=report)
-
-    return _create_record
 
 
 @pytest.mark.skipif(IS_WINDOWS, reason="datetime logic does not work when OS not on GMT")

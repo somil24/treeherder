@@ -58,7 +58,7 @@ class ReportContent:
 
 
 class BackfillNotification:
-    SUBJECT_TEMPLATE = 'Backfill bihourly report'
+    SUBJECT_TEMPLATE = 'Backfill hourly report'
 
     def __init__(self):
         self._address = None

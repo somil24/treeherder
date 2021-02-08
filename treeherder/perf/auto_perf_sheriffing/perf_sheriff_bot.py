@@ -5,6 +5,7 @@ from logging import INFO, WARNING
 from typing import List, Tuple
 
 from django.conf import settings
+from django.db.models import QuerySet
 from taskcluster.helper import TaskclusterConfig
 
 from treeherder.model.data_cycling.signature_remover import RECEIVER_TEAM_EMAIL
@@ -21,6 +22,17 @@ logger = logging.getLogger(__name__)
 
 CLIENT_ID = settings.PERF_SHERIFF_BOT_CLIENT_ID
 ACCESS_TOKEN = settings.PERF_SHERIFF_BOT_ACCESS_TOKEN
+
+
+# TODO:
+# * extract Notify as separate component
+# * extract complex instantiations into factory
+# * ensure SQL CASCADE ON DELETE for summaries & alerts vs reports & records
+# * refactor emails
+# * define testing strategy
+# * fix tests
+# * provide test coverage
+# * try to rename old BackfillReport model to reuse the name for email notification
 
 
 class PerfSheriffBot:
@@ -75,13 +87,11 @@ class PerfSheriffBot:
         return self.report_maintainer.provide_updated_reports(since, frameworks, repositories)
 
     def _backfill(self):
-
         left = self.secretary.backfills_left(on_platform='linux')
         total_consumed = 0
 
-        records_to_backfill = BackfillRecord.objects.filter(
-            status=BackfillRecord.READY_FOR_PROCESSING
-        )
+        # TODO: make this platform generic
+        records_to_backfill = self.__fetch_records_requiring_backfills()
         for record in records_to_backfill:
             if left <= 0 or self.runtime_exceeded():
                 break
@@ -91,6 +101,15 @@ class PerfSheriffBot:
 
         self.secretary.consume_backfills('linux', total_consumed)
         logger.debug(f'{self.__class__.__name__} has {left} backfills left.')
+
+    def __fetch_records_requiring_backfills(self) -> QuerySet:
+        records_to_backfill = BackfillRecord.objects.select_related(
+            'alert', 'alert__series_signature', 'alert__series_signature__platform'
+        ).filter(
+            status=BackfillRecord.READY_FOR_PROCESSING,
+            alert__series_signature__platform__platform__icontains='linux',
+        )
+        return records_to_backfill
 
     def _backfill_record(self, record: BackfillRecord, left: int) -> Tuple[int, int]:
         consumed = 0

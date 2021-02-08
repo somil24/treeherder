@@ -1,91 +1,9 @@
 from collections import Counter
-from copy import deepcopy
 from unittest.mock import Mock
 
 import pytest
 
 from treeherder.perf.auto_perf_sheriffing.backfill_reports import AlertsPicker
-from treeherder.perf.models import PerformanceAlert
-
-
-@pytest.fixture
-def test_many_various_alerts():
-    alerts = [Mock(spec=PerformanceAlert) for i in range(10)]
-    platforms = (
-        'windows10-64-shippable',
-        'windows10-64-shippable',
-        'windows7-32-shippable',
-        'windows7-32-shippable',
-        'linux64-shippable-qr',
-        'linux64-shippable-qr',
-        'osx-10-10-shippable',
-        'osx-10-10-shippable',
-        'android-hw-pix-7-1-android-aarch64',
-        'android-hw-pix-7-1-android-aarch64',
-    )
-
-    reversed_magnitudes = list(reversed(range(len(alerts))))
-    toggle = True
-    for idx, alert in enumerate(alerts):
-        alert.is_regression = toggle
-        alert.series_signature.platform.platform = platforms[idx]
-        alert.amount_pct = reversed_magnitudes[idx]
-        toggle = not toggle
-    return alerts
-
-
-@pytest.fixture
-def test_few_various_alerts():
-    alerts = [Mock(spec=PerformanceAlert) for i in range(2)]
-    platforms = ('windows7-32-shippable', 'linux64-shippable-qr')
-    reversed_magnitudes = list(reversed(range(len(alerts))))
-    toggle = True
-    for idx, alert in enumerate(alerts):
-        alert.series_signature.platform.platform = platforms[idx]
-        alert.is_regression = toggle
-        alert.amount_pct = reversed_magnitudes[idx]
-        toggle = not toggle
-    return alerts
-
-
-@pytest.fixture
-def test_few_regressions():
-    alerts = [Mock(spec=PerformanceAlert) for i in range(5)]
-    platforms = (
-        'windows10-64-shippable',
-        'windows7-32-shippable',
-        'linux64-shippable-qr',
-        'osx-10-10-shippable',
-        'android-hw-pix-7-1-android-aarch64',
-    )
-    reversed_magnitudes = list(reversed(range(len(alerts))))
-    for idx, alert in enumerate(alerts):
-        alert.series_signature.platform.platform = platforms[idx]
-        alert.is_regression = True
-        alert.amount_pct = reversed_magnitudes[idx]
-    return alerts
-
-
-@pytest.fixture
-def test_few_improvements(test_few_regressions):
-    alerts = deepcopy(test_few_regressions)
-    for alert in alerts:
-        alert.is_regression = False
-    return alerts
-
-
-@pytest.fixture
-def test_bad_platform_names():
-    alerts = [Mock(spec=PerformanceAlert) for i in range(4)]
-    platforms = (
-        'rfvrtgb',
-        '4.0',
-        '54dcwec58',
-        '8y6 t g',
-    )
-    for idx, alert in enumerate(alerts):
-        alert.series_signature.platform.platform = platforms[idx]
-    return alerts
 
 
 def test_init():
