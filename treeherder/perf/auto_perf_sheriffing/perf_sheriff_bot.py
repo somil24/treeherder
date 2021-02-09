@@ -25,13 +25,14 @@ ACCESS_TOKEN = settings.PERF_SHERIFF_BOT_ACCESS_TOKEN
 
 
 # TODO:
-# * extract complex instantiations into factory
 # * ensure SQL CASCADE ON DELETE for summaries & alerts vs reports & records
 # * refactor emails
 # * define testing strategy
+# * resolve issue with raise ArgumentError
 # * fix tests
 # * provide test coverage
 # * try to rename old BackfillReport model to reuse the name for email notification
+# * run Pycharm evaluation over changed/added files
 
 
 class PerfSheriffBot:
