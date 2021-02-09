@@ -39,7 +39,6 @@ class TaskclusterModelImpl(TaskclusterModel):
 
         # Taskcluster APIs
         self.hooks = taskcluster.Hooks({**options, 'credentials': credentials})
-        self.notify = taskcluster.Notify({**options, 'credentials': credentials})
 
         # Following least-privilege principle, as services
         # bellow don't really need authorization credentials.
@@ -182,17 +181,6 @@ class TaskclusterModelProxy(TaskclusterModel):
     TODO: remove this class when backfill tool' soft launch is complete
     """
 
-    def __init__(self, root_url, client_id=None, access_token=None):
-        options = {'rootUrl': root_url}
-        credentials = {}
-
-        if client_id:
-            credentials['clientId'] = client_id
-        if access_token:
-            credentials['accessToken'] = access_token
-
-        self.notify = taskcluster.Notify({**options, 'credentials': credentials})
-
     def trigger_action(self, action, task_id, decision_task_id, input, root_url=None) -> str:
         hash_suffix = self.__hash(task_id)
         return f'fake-backfill-task-id-for-{task_id}-{hash_suffix}'
@@ -200,3 +188,14 @@ class TaskclusterModelProxy(TaskclusterModel):
     def __hash(self, task_id) -> str:
         now = str(datetime.now())
         return hashlib.sha256(f'{now}-{task_id}').hexdigest()
+
+
+def notify_client_factory(root_url: str, client_id: str, access_token: str) -> taskcluster.Notify:
+    options = {
+        'rootUrl': root_url,
+        'credentials': {
+            'clientId': client_id,
+            'accessToken': access_token,
+        },
+    }
+    return taskcluster.Notify(options)

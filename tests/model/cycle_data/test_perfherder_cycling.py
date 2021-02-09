@@ -320,14 +320,14 @@ def test_signature_remover_when_notify_service_is_down(
 def test_total_emails_sent(
     test_perf_signature, try_repository, total_signatures, mock_tc_prod_credentials
 ):
-    tc_model = MagicMock()
+    notify_client_mock = MagicMock()
     timer = MaxRuntime()
     timer.start_timer()
     total_rows = 2
     total_emails = 4
     signatures_remover = PublicSignatureRemover(
         timer=timer,
-        taskcluster_model=tc_model,
+        notify_client=notify_client_mock,
         max_rows_allowed=total_rows,
         max_emails_allowed=total_emails,
     )
@@ -371,21 +371,21 @@ def test_total_emails_sent(
     signatures = PerformanceSignature.objects.filter(last_updated__lte=datetime.now())
     signatures_remover.remove_in_chunks(signatures)
 
-    assert tc_model.notify.email.call_count == expected_call_count
+    assert notify_client_mock.email.call_count == expected_call_count
     assert not PerformanceSignature.objects.filter(repository__name='try').exists()
 
 
 def test_remove_try_signatures_without_data(
     test_perf_signature, test_perf_data, try_repository, mock_tc_prod_credentials
 ):
-    tc_model = MagicMock()
+    notify_client_mock = MagicMock()
     timer = MaxRuntime()
     timer.start_timer()
     total_rows = 2
     total_emails = 2
     signatures_remover = PublicSignatureRemover(
         timer=timer,
-        taskcluster_model=tc_model,
+        notify_client=notify_client_mock,
         max_rows_allowed=total_rows,
         max_emails_allowed=total_emails,
     )

@@ -31,11 +31,11 @@ def test_assert_can_run_throws_exception_when_runtime_exceeded(
     secretary,
     record_ready_for_processing,
     sheriff_settings,
-    taskcluster_mock,
+    notify_client_mock,
 ):
     no_time_left = timedelta(seconds=0)
     sheriff_settings = PerfSheriffBot(
-        report_maintainer_mock, backfill_tool_mock, secretary, taskcluster_mock, no_time_left
+        report_maintainer_mock, backfill_tool_mock, secretary, notify_client_mock, no_time_left
     )
 
     with pytest.raises(MaxRuntimeExceeded):
@@ -64,12 +64,12 @@ def test_records_and_db_limits_remain_unchanged_if_no_records_suitable_for_backf
     report_maintainer_mock,
     backfill_tool_mock,
     secretary,
-    taskcluster_mock,
+    notify_client_mock,
     sheriff_settings,
     record_unsuited_for_backfill,
 ):
     sheriff_bot = PerfSheriffBot(
-        report_maintainer_mock, backfill_tool_mock, secretary, taskcluster_mock
+        report_maintainer_mock, backfill_tool_mock, secretary, notify_client_mock
     )
     sheriff_bot._backfill()
 
@@ -81,12 +81,12 @@ def test_records_remain_unchanged_if_no_backfills_left(
     report_maintainer_mock,
     backfill_tool_mock,
     secretary,
-    taskcluster_mock,
+    notify_client_mock,
     record_ready_for_processing,
     empty_sheriff_settings,
 ):
     sheriff_bot = PerfSheriffBot(
-        report_maintainer_mock, backfill_tool_mock, secretary, taskcluster_mock
+        report_maintainer_mock, backfill_tool_mock, secretary, notify_client_mock
     )
     sheriff_bot._backfill()
 
@@ -100,11 +100,11 @@ def test_records_and_db_limits_remain_unchanged_if_runtime_exceeded(
     secretary,
     record_ready_for_processing,
     sheriff_settings,
-    taskcluster_mock,
+    notify_client_mock,
 ):
     no_time_left = timedelta(seconds=0)
     sheriff_bot = PerfSheriffBot(
-        report_maintainer_mock, backfill_tool_mock, secretary, taskcluster_mock, no_time_left
+        report_maintainer_mock, backfill_tool_mock, secretary, notify_client_mock, no_time_left
     )
     try:
         sheriff_bot.sheriff(since=EPOCH, frameworks=['raptor', 'talos'], repositories=['autoland'])
@@ -138,14 +138,14 @@ def test_backfilling_gracefully_handles_invalid_json_contexts_without_blowing_up
     secretary,
     record_ready_for_processing,
     sheriff_settings,
-    taskcluster_mock,
+    notify_client_mock,
     broken_context_str,  # Note: parametrizes the test
 ):
     record_ready_for_processing.context = broken_context_str
     record_ready_for_processing.save()
 
     sheriff_bot = PerfSheriffBot(
-        report_maintainer_mock, backfill_tool_mock, secretary, taskcluster_mock
+        report_maintainer_mock, backfill_tool_mock, secretary, notify_client_mock
     )
     try:
         sheriff_bot.sheriff(since=EPOCH, frameworks=['raptor', 'talos'], repositories=['autoland'])

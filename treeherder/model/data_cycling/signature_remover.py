@@ -1,14 +1,14 @@
 import logging
 from typing import List
 
+import taskcluster
 from django.conf import settings
 from django.db import transaction
 from taskcluster.exceptions import TaskclusterRestFailure
 
 from treeherder.perf.models import PerformanceSignature
-from treeherder.services.taskcluster import TaskclusterModel
-from .max_runtime import MaxRuntime
 from .email_service import EmailService
+from .max_runtime import MaxRuntime
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +25,11 @@ class PublicSignatureRemover:
     def __init__(
         self,
         timer: MaxRuntime,
-        taskcluster_model: TaskclusterModel,
+        notify_client: taskcluster.Notify,
         max_rows_allowed=None,
         max_emails_allowed=None,
     ):
-        self.tc_model = taskcluster_model
+        self._notify = notify_client
         self._max_rows_allowed = max_rows_allowed or 50
         self._max_emails_allowed = max_emails_allowed or 10
 
@@ -86,7 +86,7 @@ class PublicSignatureRemover:
             signature.delete()
 
     def _send_email(self):
-        self.tc_model.notify.email(self.email_service.payload)
+        self._notify.email(self.email_service.payload)
 
     def __delete_and_notify(self, signatures: List[PerformanceSignature]) -> bool:
         """

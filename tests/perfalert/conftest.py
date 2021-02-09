@@ -1,8 +1,9 @@
 from unittest.mock import MagicMock
 
 import pytest
+import taskcluster
 
-from treeherder.services.taskcluster import TaskclusterModel, TaskclusterModelImpl
+from treeherder.services.taskcluster import notify_client_factory
 
 
 @pytest.fixture
@@ -16,7 +17,7 @@ def job_from_try(eleven_job_blobs, create_jobs):
 
 
 @pytest.fixture
-def taskcluster_mock() -> TaskclusterModel:
+def notify_client_mock() -> taskcluster.Notify:
     return MagicMock(
-        spec=TaskclusterModelImpl('https://fakerooturl.org', 'FAKE_CLIENT_ID', 'FAKE_ACCESS_TOKEN')
+        spec=notify_client_factory('https://fakerooturl.org', 'FAKE_CLIENT_ID', 'FAKE_ACCESS_TOKEN')
     )

@@ -4,19 +4,19 @@ from json import JSONDecodeError
 from logging import INFO, WARNING
 from typing import List, Tuple
 
+import taskcluster
 from django.conf import settings
 from django.db.models import QuerySet
 from taskcluster.helper import TaskclusterConfig
 
 from treeherder.model.data_cycling.signature_remover import RECEIVER_TEAM_EMAIL
 from treeherder.model.models import JobType, Job
-from treeherder.perf.models import BackfillRecord, BackfillReport
 from treeherder.perf.auto_perf_sheriffing.backfill_reports import BackfillReportMaintainer
 from treeherder.perf.auto_perf_sheriffing.backfill_tool import BackfillTool
+from treeherder.perf.auto_perf_sheriffing.secretary_tool import SecretaryTool
 from treeherder.perf.email import BackfillNotification
 from treeherder.perf.exceptions import CannotBackfill, MaxRuntimeExceeded
-from treeherder.perf.auto_perf_sheriffing.secretary_tool import SecretaryTool
-from treeherder.services.taskcluster import TaskclusterModel
+from treeherder.perf.models import BackfillRecord, BackfillReport
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,6 @@ ACCESS_TOKEN = settings.PERF_SHERIFF_BOT_ACCESS_TOKEN
 
 
 # TODO:
-# * extract Notify as separate component
 # * extract complex instantiations into factory
 # * ensure SQL CASCADE ON DELETE for summaries & alerts vs reports & records
 # * refactor emails
@@ -47,13 +46,13 @@ class PerfSheriffBot:
         report_maintainer: BackfillReportMaintainer,
         backfill_tool: BackfillTool,
         secretary_tool: SecretaryTool,
-        taskcluster_model: TaskclusterModel,
+        notify_client: taskcluster.Notify,
         max_runtime: timedelta = None,
     ):
         self.report_maintainer = report_maintainer
         self.backfill_tool = backfill_tool
         self.secretary = secretary_tool
-        self.taskcluster = taskcluster_model
+        self._notify = notify_client
         self._woke_up_time = datetime.now()
         self.backfilled_records = []  # useful for reporting backfill outcome
         self._max_runtime = self.DEFAULT_MAX_RUNTIME if max_runtime is None else max_runtime
@@ -189,4 +188,4 @@ class PerfSheriffBot:
         notification.address = RECEIVER_TEAM_EMAIL
 
         # send email
-        self.taskcluster.notify.email(notification.as_payload())
+        self._notify.email(notification.as_payload())

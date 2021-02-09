@@ -12,11 +12,15 @@ from treeherder.perf.auto_perf_sheriffing.backfill_reports import (
     BackfillReportMaintainer,
 )
 from treeherder.perf.auto_perf_sheriffing.backfill_tool import BackfillTool
-from treeherder.perf.exceptions import MaxRuntimeExceeded
-from treeherder.perf.auto_perf_sheriffing.secretary_tool import SecretaryTool
-from treeherder.perf.models import PerformanceFramework
 from treeherder.perf.auto_perf_sheriffing.perf_sheriff_bot import PerfSheriffBot
-from treeherder.services.taskcluster import DEFAULT_ROOT_URL as root_url, TaskclusterModelProxy
+from treeherder.perf.auto_perf_sheriffing.secretary_tool import SecretaryTool
+from treeherder.perf.exceptions import MaxRuntimeExceeded
+from treeherder.perf.models import PerformanceFramework
+from treeherder.services.taskcluster import (
+    DEFAULT_ROOT_URL as root_url,
+    TaskclusterModelProxy,
+    notify_client_factory,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -68,10 +72,11 @@ class Command(BaseCommand):
         report_maintainer = BackfillReportMaintainer(alerts_picker, backfill_context_fetcher)
         backfill_tool = BackfillTool(taskcluster)
         secretary_tool = SecretaryTool()
+        notify_client = notify_client_factory(root_url, client_id, access_token)
 
         try:
             perf_sheriff_bot = PerfSheriffBot(
-                report_maintainer, backfill_tool, secretary_tool, taskcluster
+                report_maintainer, backfill_tool, secretary_tool, notify_client
             )
             perf_sheriff_bot.sheriff(since, frameworks, repositories)
         except MaxRuntimeExceeded as ex:
