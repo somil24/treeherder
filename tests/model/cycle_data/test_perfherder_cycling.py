@@ -10,7 +10,11 @@ from django.db import connection, IntegrityError
 
 from treeherder.model.data_cycling import MaxRuntime
 from treeherder.model.data_cycling import PerfherderCycler
-from treeherder.model.data_cycling import PublicSignatureRemover, EmailService
+from treeherder.model.data_cycling import PublicSignatureRemover
+from treeherder.model.data_cycling.email_service import (
+    DeleteNotificationWriter,
+    DeleteReportContent,
+)
 from treeherder.model.data_cycling.removal_strategies import (
     MainRemovalStrategy,
     TryDataRemoval,
@@ -284,9 +288,9 @@ def test_signature_remover(
 
 
 def test_email_content(test_perf_signature):
-    email_service = EmailService(address='test_email@test.com')
-    email_service.add_signature_to_content(test_perf_signature)
-    expected_result = email_service.TABLE_DESCRIPTION + email_service.TABLE_HEADERS
+    delete_email_writer = DeleteNotificationWriter()
+    delete_email_writer.prepare_new_email([test_perf_signature])
+    expected_result = DeleteReportContent.DESCRIPTION + DeleteReportContent.TABLE_HEADERS
     expected_result += (
         """| {repository} | {framework} | {platform} | {suite} | {application} |""".format(
             repository=test_perf_signature.repository.name,
@@ -297,7 +301,7 @@ def test_email_content(test_perf_signature):
         )
     )
     expected_result += '\n'
-    assert expected_result == email_service.content
+    assert expected_result == delete_email_writer.email["content"]
 
 
 def test_signature_remover_when_notify_service_is_down(

@@ -7,9 +7,8 @@ from django.db import transaction
 from taskcluster.exceptions import TaskclusterRestFailure
 
 from treeherder.perf.models import PerformanceSignature
-from .email_service import EmailService
+from .email_service import DeleteNotificationWriter
 from .max_runtime import MaxRuntime
-from ...perf.email import FXPERF_TEST_ENG_EMAIL
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +30,7 @@ class PublicSignatureRemover:
         self._max_rows_allowed = max_rows_allowed or 50
         self._max_emails_allowed = max_emails_allowed or 10
 
-        self.email_service = EmailService(address=FXPERF_TEST_ENG_EMAIL)
+        self.email_writer = DeleteNotificationWriter()
         self.timer = timer
 
     def remove_in_chunks(self, signatures):
@@ -49,7 +48,6 @@ class PublicSignatureRemover:
             ):
                 rows_left -= 1
                 chunk_of_signatures.append(perf_signature)
-                self.email_service.add_signature_to_content(perf_signature)
 
                 if rows_left == 0:
                     success = self.__delete_and_notify(chunk_of_signatures)
@@ -58,7 +56,6 @@ class PublicSignatureRemover:
 
                     emails_sent += 1
                     chunk_of_signatures = []
-                    self.email_service.content = None
                     rows_left = self._max_rows_allowed
 
         if emails_sent < self._max_emails_allowed and chunk_of_signatures != []:
@@ -84,7 +81,7 @@ class PublicSignatureRemover:
             signature.delete()
 
     def _send_email(self):
-        self._notify.email(self.email_service.payload)
+        self._notify.email(self.email_writer.email)
 
     def __delete_and_notify(self, signatures: List[PerformanceSignature]) -> bool:
         """
@@ -93,6 +90,7 @@ class PublicSignatureRemover:
         """
 
         try:
+            self._prepare_notification(signatures)
             with transaction.atomic():
                 self._delete(signatures)
                 self._send_notification()
@@ -103,3 +101,6 @@ class PublicSignatureRemover:
             return False
 
         return True
+
+    def _prepare_notification(self, signatures: List[PerformanceSignature]):
+        self.email_writer.prepare_new_email(signatures)

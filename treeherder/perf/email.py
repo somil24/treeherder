@@ -5,7 +5,7 @@ from typing import List
 
 from treeherder.perf.models import BackfillRecord
 
-FXPERF_TEST_ENG_EMAIL = "perftest-alerts@mozilla.com"
+FXPERF_TEST_ENG_EMAIL = "perftest-alerts@mozilla.com"  # team' s email
 
 
 @dataclass
@@ -61,8 +61,6 @@ class ReportContent:
 
         return f"| {summary_id} | {alert_id} | {job_symbol} | {total_backfills} | {push_range} |"
 
-    # TODO: should I use __repr__() instead?
-
     def __str__(self):
         if self._raw_content is None:
             # TODO: replace with proper exception type
@@ -74,7 +72,7 @@ class EmailWriter(ABC):
     def __init__(self):
         self._email = Email()
 
-    def prepare_email(self, must_mention: List[object]) -> dict:
+    def prepare_new_email(self, must_mention: List[object]) -> dict:
         self._write_address()
         self._write_subject()
         self._write_content(must_mention)
@@ -105,5 +103,7 @@ class BackfillNotificationWriter(EmailWriter):
         self._email.subject = "Backfill hourly report"
 
     def _write_content(self, must_mention: List[BackfillRecord]):
-        self._content = ReportContent()
-        self._content.include_records(must_mention)
+        content = ReportContent()
+        content.include_records(must_mention)
+
+        self._email.content = str(content)

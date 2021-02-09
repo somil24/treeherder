@@ -24,11 +24,11 @@ ACCESS_TOKEN = settings.PERF_SHERIFF_BOT_ACCESS_TOKEN
 
 
 # TODO:
-# * refactor emails
-# * define testing strategy
 # * resolve issue with raise ArgumentError
 # * solid & consistent way for creating Taskcluster services on production & handling them on non-production
+# * provide proper subject & content description for email
 # * fix tests
+# * define testing strategy
 # * provide test coverage
 # * try to rename old BackfillReport model to reuse the name for email notification
 # * run Pycharm evaluation over changed/added files
@@ -36,7 +36,7 @@ ACCESS_TOKEN = settings.PERF_SHERIFF_BOT_ACCESS_TOKEN
 
 class PerfSheriffBot:
     """
-    Wrapper class used to aggregate the reporting of backfill reports.
+    Automates backfilling of skipped perf jobs.
     """
 
     DEFAULT_MAX_RUNTIME = timedelta(minutes=50)
@@ -184,7 +184,7 @@ class PerfSheriffBot:
 
     def _notify_backfill_outcome(self):
         email_writer = BackfillNotificationWriter()
-        backfill_notification = email_writer.prepare_email(self.backfilled_records)
+        backfill_notification = email_writer.prepare_new_email(self.backfilled_records)
 
         # send email
         self._notify.email(backfill_notification)
