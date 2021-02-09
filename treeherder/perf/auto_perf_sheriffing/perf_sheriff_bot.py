@@ -9,12 +9,11 @@ from django.conf import settings
 from django.db.models import QuerySet
 from taskcluster.helper import TaskclusterConfig
 
-from treeherder.model.data_cycling.signature_remover import RECEIVER_TEAM_EMAIL
 from treeherder.model.models import JobType, Job
 from treeherder.perf.auto_perf_sheriffing.backfill_reports import BackfillReportMaintainer
 from treeherder.perf.auto_perf_sheriffing.backfill_tool import BackfillTool
 from treeherder.perf.auto_perf_sheriffing.secretary_tool import SecretaryTool
-from treeherder.perf.email import BackfillNotification
+from treeherder.perf.email import BackfillNotificationWriter
 from treeherder.perf.exceptions import CannotBackfill, MaxRuntimeExceeded
 from treeherder.perf.models import BackfillRecord, BackfillReport
 
@@ -25,10 +24,10 @@ ACCESS_TOKEN = settings.PERF_SHERIFF_BOT_ACCESS_TOKEN
 
 
 # TODO:
-# * ensure SQL CASCADE ON DELETE for summaries & alerts vs reports & records
 # * refactor emails
 # * define testing strategy
 # * resolve issue with raise ArgumentError
+# * solid & consistent way for creating Taskcluster services on production & handling them on non-production
 # * fix tests
 # * provide test coverage
 # * try to rename old BackfillReport model to reuse the name for email notification
@@ -184,9 +183,8 @@ class PerfSheriffBot:
         return pending_tasks_count > acceptable_limit
 
     def _notify_backfill_outcome(self):
-        notification = BackfillNotification()
-        notification.include_records(self.backfilled_records)
-        notification.address = RECEIVER_TEAM_EMAIL
+        email_writer = BackfillNotificationWriter()
+        backfill_notification = email_writer.prepare_email(self.backfilled_records)
 
         # send email
-        self._notify.email(notification.as_payload())
+        self._notify.email(backfill_notification)

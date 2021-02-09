@@ -77,3 +77,65 @@ class EmailService:
             "suite": signature.suite,
             "application": signature.application,
         }
+
+
+# class ReportContent:
+#     DESCRIPTION = """Perfherder removes performance data that is older than one year and in some cases even sooner, leaving behind performance signatures that aren't associated to any data point. These as well need to be removed.
+#     > __Here's a summary of recently deleted performance signatures:__
+#     ---
+#         """
+#
+#     TABLE_HEADERS = """
+#     | Repository | Framework | Platform | Suite | Application |
+#     | :---: | :---: | :---: | :---: | :---: |
+#         """
+#
+#     def __init__(self):
+#         self._raw_content = None
+#
+#     def include_signatures(self, signatures: List[PerformanceSignature]):
+#         self._initialize_report_intro()
+#
+#         for signature in signatures:
+#             self._include_in_report(signature)
+#
+#     def _initialize_report_intro(self):
+#         if self._raw_content is None:
+#             self._raw_content = self.DESCRIPTION + self.TABLE_HEADERS
+#
+#     def _include_in_report(self, signature: PerformanceSignature):
+#         new_table_row = self._build_table_row(signature)
+#         self._raw_content += f"{new_table_row}\n"
+#
+#     def _build_table_row(self, signature: PerformanceSignature) -> str:
+#         p = self.__extract_properties(signature)
+#
+#         return f'| {p["repository"]} | {p["framework"]} | {platform} | {suite} | {application} |'
+#
+#     def __extract_properties(self, signature: PerformanceSignature) -> dict:
+#         return {
+#             "repository": signature.repository.name,
+#             "framework": signature.framework.name,
+#             "platform": signature.platform.platform,
+#             "suite": signature.suite,
+#             "application": signature.application,
+#         }
+#
+#     # TODO: should I use __repr__() instead?
+#
+#     def __str__(self):
+#         if self._raw_content is None:
+#             # TODO: replace with proper exception type
+#             raise Exception("Programming error: content has not been set.")
+#         return self._raw_content
+#
+# class DeleteNotificationWriter(EmailWriter):
+#     def _write_address(self):
+#         self._email.address = RECEIVER_TEAM_EMAIL
+#
+#     def _write_subject(self):
+#         self._email.subject = "Summary of deleted Performance Signatures"
+#
+#     def _write_content(self, must_mention: List[PerformanceSignature]):
+#         self._content = ReportContent()
+#         self._content.include_records(must_mention)

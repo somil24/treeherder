@@ -9,11 +9,9 @@ from taskcluster.exceptions import TaskclusterRestFailure
 from treeherder.perf.models import PerformanceSignature
 from .email_service import EmailService
 from .max_runtime import MaxRuntime
+from ...perf.email import FXPERF_TEST_ENG_EMAIL
 
 logger = logging.getLogger(__name__)
-
-# TODO: find a better place for this
-RECEIVER_TEAM_EMAIL = "perftest-alerts@mozilla.com"
 
 
 class PublicSignatureRemover:
@@ -33,7 +31,7 @@ class PublicSignatureRemover:
         self._max_rows_allowed = max_rows_allowed or 50
         self._max_emails_allowed = max_emails_allowed or 10
 
-        self.email_service = EmailService(address=RECEIVER_TEAM_EMAIL)
+        self.email_service = EmailService(address=FXPERF_TEST_ENG_EMAIL)
         self.timer = timer
 
     def remove_in_chunks(self, signatures):

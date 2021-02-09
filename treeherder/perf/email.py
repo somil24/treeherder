@@ -1,8 +1,21 @@
-from copy import copy
+from dataclasses import dataclass, asdict
+from abc import ABC, abstractmethod
 
 from typing import List
 
 from treeherder.perf.models import BackfillRecord
+
+FXPERF_TEST_ENG_EMAIL = "perftest-alerts@mozilla.com"
+
+
+@dataclass
+class Email:
+    address: str = None
+    content: str = None
+    subject: str = None
+
+    def as_payload(self) -> dict:
+        return asdict(self)
 
 
 class ReportContent:
@@ -57,43 +70,40 @@ class ReportContent:
         return self._raw_content
 
 
-class BackfillNotification:
-    SUBJECT_TEMPLATE = 'Backfill hourly report'
-
+class EmailWriter(ABC):
     def __init__(self):
-        self._address = None
-        self._content: ReportContent = None
-        self._subject = copy(self.SUBJECT_TEMPLATE)
+        self._email = Email()
+
+    def prepare_email(self, must_mention: List[object]) -> dict:
+        self._write_address()
+        self._write_subject()
+        self._write_content(must_mention)
+        return self.email
 
     @property
-    def address(self):
-        if self._address is None:
-            # TODO: replace with proper exception type
-            raise Exception("Programming error: recipient address has not been set.")
-        return self._address
+    def email(self):
+        return self._email.as_payload()
 
-    @address.setter
-    def address(self, address: str):
-        self._address = address
+    @abstractmethod
+    def _write_address(self):
+        pass
 
-    @property
-    def content(self):
-        if self._content is None:
-            # TODO: replace with proper exception type
-            raise Exception("Programming error: content has not been set.")
-        return str(self._content)
+    @abstractmethod
+    def _write_subject(self):
+        pass
 
-    @property
-    def subject(self):
-        return self._subject
+    @abstractmethod
+    def _write_content(self, must_mention: List[object]):
+        pass
 
-    def include_records(self, records: List[BackfillRecord]):
+
+class BackfillNotificationWriter(EmailWriter):
+    def _write_address(self):
+        self._email.address = FXPERF_TEST_ENG_EMAIL
+
+    def _write_subject(self):
+        self._email.subject = "Backfill hourly report"
+
+    def _write_content(self, must_mention: List[BackfillRecord]):
         self._content = ReportContent()
-        self._content.include_records(records)
-
-    def as_payload(self) -> dict:
-        return {
-            "address": self.address,
-            "content": self.content,
-            "subject": self.subject,
-        }
+        self._content.include_records(must_mention)
