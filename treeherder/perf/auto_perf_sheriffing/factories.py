@@ -18,9 +18,7 @@ def perf_sheriff_bot_factory(days_to_lookup: timedelta) -> PerfSheriffBot:
     report_maintainer = __report_maintainer_factory(days_to_lookup)
     backfill_tool = __backfill_tool_factory()
     secretary_tool = SecretaryTool()
-    notify_client = notify_client_factory(
-        DEFAULT_ROOT_URL, settings.NOTIFY_CLIENT_ID, settings.NOTIFY_ACCESS_TOKEN
-    )
+    notify_client = notify_client_factory()
 
     return PerfSheriffBot(report_maintainer, backfill_tool, secretary_tool, notify_client)
 

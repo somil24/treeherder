@@ -4,14 +4,12 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
-import taskcluster
 from django.core.management import call_command
 from django.db import connection, IntegrityError
 
 from treeherder.model.data_cycling import MaxRuntime
 from treeherder.model.data_cycling import PerfherderCycler
 from treeherder.model.data_cycling import PublicSignatureRemover
-from treeherder.perf.email import DeleteReportContent, DeleteNotificationWriter
 from treeherder.model.data_cycling.removal_strategies import (
     MainRemovalStrategy,
     TryDataRemoval,
@@ -19,6 +17,7 @@ from treeherder.model.data_cycling.removal_strategies import (
     StalledDataRemoval,
 )
 from treeherder.model.models import Push
+from treeherder.perf.email import DeleteReportContent, DeleteNotificationWriter
 from treeherder.perf.exceptions import MaxRuntimeExceeded
 from treeherder.perf.models import (
     PerformanceDatum,
@@ -44,7 +43,7 @@ def test_cycle_performance_data(
     repository_name,
     push_stored,
     test_perf_signature,
-    mock_taskcluster_notify,
+    taskcluster_notify_mock,
 ):
     test_repository.name = repository_name
     test_repository.save()
@@ -105,7 +104,7 @@ def test_cycle_performance_data(
     ]
 
 
-def test_performance_signatures_are_deleted(test_perf_signature, mock_taskcluster_notify):
+def test_performance_signatures_are_deleted(test_perf_signature, taskcluster_notify_mock):
     cycler = PerfherderCycler(chunk_size=100, sleep_time=0)
     expired_timestamp = cycler.max_timestamp
 
@@ -149,7 +148,7 @@ def test_try_data_removal(
     try_push_stored,
     test_perf_signature,
     test_perf_signature_2,
-    mock_taskcluster_notify,
+    taskcluster_notify_mock,
 ):
     total_removals = 3
     test_perf_signature.repository = try_repository
@@ -207,7 +206,7 @@ def test_irrelevant_repos_data_removal(
     repository_name,
     push_stored,
     test_perf_signature,
-    mock_taskcluster_notify,
+    taskcluster_notify_mock,
 ):
     # test_repository is considered irrelevant repositories
 
@@ -266,7 +265,7 @@ def test_signature_remover(
     test_perf_signature,
     test_perf_signature_2,
     test_perf_data,
-    mock_taskcluster_notify,
+    taskcluster_notify_mock,
     mock_tc_prod_credentials,
 ):
     cycler = PerfherderCycler(chunk_size=100, sleep_time=0)
@@ -278,15 +277,14 @@ def test_signature_remover(
 
     call_command('cycle_data', 'from:perfherder')
 
-    assert taskcluster.Notify().ping.called_once
-    assert taskcluster.Notify().email.call_count == 1
+    assert taskcluster_notify_mock.email.call_count == 1
     assert len(PerformanceSignature.objects.all()) == 1
     assert PerformanceSignature.objects.first() == test_perf_signature
 
 
 def test_email_content(test_perf_signature):
     delete_email_writer = DeleteNotificationWriter()
-    delete_email_writer.prepare_new_email([test_perf_signature])
+    delete_email_writer.prepare_new_email(test_perf_signature)
     expected_result = DeleteReportContent.DESCRIPTION + DeleteReportContent.TABLE_HEADERS
     expected_result += (
         """| {repository} | {framework} | {platform} | {suite} | {application} |""".format(
@@ -299,22 +297,6 @@ def test_email_content(test_perf_signature):
     )
     expected_result += '\n'
     assert expected_result == delete_email_writer.email["content"]
-
-
-def test_signature_remover_when_notify_service_is_down(
-    test_perf_signature,
-    test_perf_signature_2,
-    test_perf_data,
-    mock_taskcluster_notify,
-    mock_tc_prod_credentials,
-):
-    taskcluster.Notify().ping.side_effect = Exception('Email Service is down.')
-
-    call_command('cycle_data', 'from:perfherder')
-
-    assert taskcluster.Notify().ping.called_once
-    assert not taskcluster.Notify().email.called
-    assert len(PerformanceSignature.objects.all()) == 2
 
 
 @pytest.mark.parametrize('total_signatures', [3, 4, 8, 10])
@@ -419,7 +401,7 @@ def test_remove_try_signatures_without_data(
     assert PerformanceSignature.objects.filter(id=signature_with_perf_data.id).exists()
 
 
-def test_performance_cycler_quit_indicator(mock_taskcluster_notify):
+def test_performance_cycler_quit_indicator(taskcluster_notify_mock):
     ten_minutes_ago = datetime.now() - timedelta(minutes=10)
     one_second = timedelta(seconds=1)
 
@@ -464,7 +446,7 @@ def empty_alert_summary(
     ],
 )
 def test_summary_without_any_kind_of_alerts_is_deleted(
-    expired_time, empty_alert_summary, mock_taskcluster_notify
+    expired_time, empty_alert_summary, taskcluster_notify_mock
 ):
     empty_alert_summary.created = expired_time
     empty_alert_summary.save()
@@ -487,7 +469,7 @@ def test_summary_without_any_kind_of_alerts_is_deleted(
     ],
 )
 def test_summary_without_any_kind_of_alerts_isnt_deleted(
-    recently, empty_alert_summary, mock_taskcluster_notify
+    recently, empty_alert_summary, taskcluster_notify_mock
 ):
     empty_alert_summary.created = recently
     empty_alert_summary.save()
@@ -520,7 +502,7 @@ def test_summary_with_alerts_isnt_deleted(
     test_perf_alert,
     test_perf_alert_2,
     test_perf_data,
-    mock_taskcluster_notify,
+    taskcluster_notify_mock,
 ):
     empty_alert_summary.created = creation_time
     empty_alert_summary.save()

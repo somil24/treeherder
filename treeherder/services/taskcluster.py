@@ -6,6 +6,7 @@ from typing import List
 
 import jsone
 import taskcluster
+from django.conf import settings
 
 from treeherder.utils.taskcluster_lib_scopes import satisfiesExpression
 
@@ -209,13 +210,15 @@ class NotifyNullObject(Notify):
         logger.debug(f"Faking sending of email `{args}`")
 
 
-def notify_client_factory(root_url: str, client_id: str, access_token: str) -> Notify:
+def notify_client_factory(
+    root_url: str = None, client_id: str = None, access_token: str = None
+) -> Notify:
     if client_id and access_token:
         options = {
-            'rootUrl': root_url,
+            'rootUrl': root_url or DEFAULT_ROOT_URL,
             'credentials': {
-                'clientId': client_id,
-                'accessToken': access_token,
+                'clientId': client_id or settings.NOTIFY_CLIENT_ID,
+                'accessToken': access_token or settings.NOTIFY_ACCESS_TOKEN,
             },
         }
         return NotifyAdapter(options)

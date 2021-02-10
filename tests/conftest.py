@@ -8,7 +8,7 @@ from os.path import join, dirname
 import kombu
 import pytest
 import responses
-import taskcluster
+from treeherder.services import taskcluster
 from _pytest.monkeypatch import MonkeyPatch
 from django.conf import settings
 from rest_framework.test import APIClient
@@ -257,8 +257,15 @@ def mock_log_parser(monkeypatch):
 
 
 @pytest.fixture
-def mock_taskcluster_notify(monkeypatch):
-    monkeypatch.setattr(taskcluster, 'Notify', MagicMock())
+def taskcluster_notify_mock(monkeypatch):
+    mock = MagicMock()
+
+    def mockreturn(*arg, **kwargs):
+        nonlocal mock
+        return mock
+
+    monkeypatch.setattr(taskcluster, 'notify_client_factory', mockreturn)
+    return mock
 
 
 @pytest.fixture

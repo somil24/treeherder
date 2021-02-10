@@ -24,7 +24,9 @@ ACCESS_TOKEN = settings.PERF_SHERIFF_BOT_ACCESS_TOKEN
 
 
 # TODO:
-# * fix tests
+# * add push range
+# * raise proper exceptions from email composition
+# * improve linux_perf_alert fixture
 # * define testing strategy
 # * provide test coverage
 # * try to rename old BackfillReport model to reuse the name for email notification
