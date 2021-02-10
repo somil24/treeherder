@@ -11,10 +11,7 @@ from django.db import connection, IntegrityError
 from treeherder.model.data_cycling import MaxRuntime
 from treeherder.model.data_cycling import PerfherderCycler
 from treeherder.model.data_cycling import PublicSignatureRemover
-from treeherder.model.data_cycling.email_service import (
-    DeleteNotificationWriter,
-    DeleteReportContent,
-)
+from treeherder.perf.email import DeleteReportContent, DeleteNotificationWriter
 from treeherder.model.data_cycling.removal_strategies import (
     MainRemovalStrategy,
     TryDataRemoval,

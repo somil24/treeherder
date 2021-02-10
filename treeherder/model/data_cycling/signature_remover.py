@@ -7,7 +7,7 @@ from django.db import transaction
 from taskcluster.exceptions import TaskclusterRestFailure
 
 from treeherder.perf.models import PerformanceSignature
-from .email_service import DeleteNotificationWriter
+from ...perf.email import DeleteNotificationWriter
 from .max_runtime import MaxRuntime
 
 logger = logging.getLogger(__name__)

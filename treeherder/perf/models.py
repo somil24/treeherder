@@ -1,6 +1,5 @@
 import datetime
 import json
-
 from typing import List
 
 from django.contrib.auth.models import User
@@ -28,6 +27,10 @@ class PerformanceFramework(models.Model):
 
     class Meta:
         db_table = 'performance_framework'
+
+    @classmethod
+    def fetch_all_names(cls) -> List[str]:
+        return cls.objects.values_list('name', flat=True)
 
     def __str__(self):
         return self.name
