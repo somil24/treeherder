@@ -31,6 +31,9 @@ class EmailWriter(ABC):
         self._email = Email()
 
     def prepare_new_email(self, must_mention: List[object]) -> dict:
+        """
+        Template method
+        """
         must_mention = self.__ensure_its_list(must_mention)
 
         self._write_address()

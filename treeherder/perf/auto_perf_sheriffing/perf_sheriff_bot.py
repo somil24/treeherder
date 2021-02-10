@@ -24,7 +24,6 @@ ACCESS_TOKEN = settings.PERF_SHERIFF_BOT_ACCESS_TOKEN
 
 
 # TODO:
-# * solid & consistent way for creating Taskcluster services on production & handling them on non-production
 # * fix tests
 # * define testing strategy
 # * provide test coverage

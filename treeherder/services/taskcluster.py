@@ -190,12 +190,35 @@ class TaskclusterModelProxy(TaskclusterModel):
         return hashlib.sha256(f'{now}-{task_id}').hexdigest()
 
 
-def notify_client_factory(root_url: str, client_id: str, access_token: str) -> taskcluster.Notify:
-    options = {
-        'rootUrl': root_url,
-        'credentials': {
-            'clientId': client_id,
-            'accessToken': access_token,
-        },
-    }
-    return taskcluster.Notify(options)
+class Notify(ABC):
+    @abstractmethod
+    def email(self, *args, **kwargs):
+        pass
+
+
+class NotifyAdapter(Notify):
+    def __init__(self, options=None, session=None):
+        self._notify_adaptee = taskcluster.Notify(options, session)
+
+    def email(self, *args, **kwargs):
+        return self._notify_adaptee.email(*args, **kwargs)
+
+
+class NotifyNullObject(Notify):
+    def email(self, *args, **kwargs):
+        logger.debug(f"Faking sending of email `{args}`")
+
+
+def notify_client_factory(root_url: str, client_id: str, access_token: str) -> Notify:
+    if client_id and access_token:
+        options = {
+            'rootUrl': root_url,
+            'credentials': {
+                'clientId': client_id,
+                'accessToken': access_token,
+            },
+        }
+        return NotifyAdapter(options)
+
+    # otherwise we're not on production & shouldn't email anything
+    return NotifyNullObject()
