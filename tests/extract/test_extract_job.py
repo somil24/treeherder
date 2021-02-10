@@ -42,7 +42,6 @@ def test_make_job(complex_job, extract_job_settings):
     assert result[0].num == 1
 
 
-@pytest.mark.skip("TODO: stabilize tests later")
 def test_extract_job_sql(extract_job_settings, transactional_db):
     """
     VERIFY SQL OVER DATABASE
