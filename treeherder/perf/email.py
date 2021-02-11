@@ -135,8 +135,7 @@ class BackfillReportContent:
 
     def __str__(self):
         if self._raw_content is None:
-            # TODO: replace with proper exception type
-            raise Exception("Programming error: content has not been set.")
+            raise ValueError("No content set")
         return self._raw_content
 
 
@@ -205,8 +204,7 @@ class DeleteReportContent:
 
     def __str__(self):
         if self._raw_content is None:
-            # TODO: replace with proper exception type
-            raise Exception("Programming error: content has not been set.")
+            raise ValueError("No content set")
         return self._raw_content
 
 
