@@ -6,11 +6,10 @@ from unittest.mock import Mock
 
 import pytest
 
+from tests.conftest import create_perf_alert
 from treeherder.model.models import Job, Option, OptionCollection, MachinePlatform
 from treeherder.perf.auto_perf_sheriffing.backfill_reports import AlertsPicker
-
 from treeherder.perf.models import PerformanceAlert, PerformanceDatum, PerformanceSignature
-
 
 # For testing BackfillReportMaintainer
 LETTERS = string.ascii_lowercase
@@ -98,15 +97,8 @@ def create_alerts(create_perf_signature):
     def _create_alerts(summary, relevant=True, amount=3):
         alerts = []
         for _ in range(amount):
-            alert = PerformanceAlert.objects.create(
-                summary=summary,
-                series_signature=create_perf_signature(relevant),
-                is_regression=True,
-                amount_pct=0.5,
-                amount_abs=50.0,
-                prev_value=100.0,
-                new_value=150.0,
-                t_value=20.0,
+            alert = create_perf_alert(
+                summary=summary, series_signature=create_perf_signature(relevant)
             )
             alerts.append(alert)
         return alerts

@@ -4,6 +4,7 @@ import pytest
 from django.urls import reverse
 from first import first
 
+from tests.conftest import create_perf_alert
 from treeherder.perf.models import PerformanceAlert, PerformanceAlertSummary, PerformanceFramework
 
 
@@ -464,16 +465,10 @@ def test_nudge_recalculates_alert_properties(
 def test_timestamps_on_alert_and_summaries_inside_code(
     test_perf_alert_summary, test_perf_signature, test_perf_signature_2
 ):
-    new_alert = PerformanceAlert.objects.create(
-        summary=test_perf_alert_summary,
-        series_signature=test_perf_signature,
-        is_regression=True,
-        amount_pct=10,
-        amount_abs=10,
-        prev_value=10,
-        new_value=11,
-        t_value=10,
+    new_alert = create_perf_alert(
+        summary=test_perf_alert_summary, series_signature=test_perf_signature
     )
+
     assert new_alert.created <= new_alert.last_updated
     assert new_alert.first_triaged is None
 

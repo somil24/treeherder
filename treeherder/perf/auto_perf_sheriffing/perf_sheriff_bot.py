@@ -9,7 +9,7 @@ from django.conf import settings
 from django.db.models import QuerySet
 from taskcluster.helper import TaskclusterConfig
 
-from treeherder.model.models import JobType, Job
+from treeherder.model.models import JobType, Job, Push
 from treeherder.perf.auto_perf_sheriffing.backfill_reports import BackfillReportMaintainer
 from treeherder.perf.auto_perf_sheriffing.backfill_tool import BackfillTool
 from treeherder.perf.auto_perf_sheriffing.secretary_tool import SecretaryTool
@@ -25,7 +25,6 @@ ACCESS_TOKEN = settings.PERF_SHERIFF_BOT_ACCESS_TOKEN
 
 # TODO:
 # * proper exception handling for building push range
-# * improve linux_perf_alert fixture
 # * define testing strategy
 # * provide test coverage
 # * try to rename old BackfillReport model to reuse the name for email notification
@@ -182,7 +181,11 @@ class PerfSheriffBot:
 
     def _notify_backfill_outcome(self):
         email_writer = BackfillNotificationWriter()
-        backfill_notification = email_writer.prepare_new_email(self.backfilled_records)
+        try:
+            backfill_notification = email_writer.prepare_new_email(self.backfilled_records)
+        except (JSONDecodeError, KeyError, Push.DoesNotExist) as ex:
+            logger.warning(f"Failed to email backfill report.{type(ex)}: {ex}")
+            return
 
         # send email
         self._notify.email(backfill_notification)

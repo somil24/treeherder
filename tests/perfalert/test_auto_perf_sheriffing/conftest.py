@@ -4,10 +4,16 @@ from datetime import datetime, timedelta
 import pytest
 import simplejson as json
 
-from tests.conftest import SampleDataJSONLoader
+from tests.conftest import SampleDataJSONLoader, create_perf_signature, create_perf_alert
 from treeherder.model.models import MachinePlatform, Job
 from treeherder.perf.auto_perf_sheriffing.secretary_tool import SecretaryTool
-from treeherder.perf.models import BackfillReport, BackfillRecord, PerformanceSettings
+from treeherder.perf.models import (
+    BackfillReport,
+    BackfillRecord,
+    PerformanceSettings,
+    PerformanceSignature,
+    PerformanceAlert,
+)
 
 # For testing PerfSheriffBot
 from treeherder.utils import default_serializer
@@ -55,20 +61,16 @@ def record_unsuited_for_backfill(test_perf_alert, request):
 
 
 @pytest.fixture
-def linux_signature(test_perf_signature):
+def linux_signature(test_repository, test_perf_framework) -> PerformanceSignature:
     linux_platform = MachinePlatform.objects.create(
         os_name='linux', platform='linux', architecture='x86'
     )
-    test_perf_signature.platform = linux_platform
-    test_perf_signature.save()
-
-    return test_perf_signature
+    return create_perf_signature(test_perf_framework, test_repository, linux_platform)
 
 
 @pytest.fixture
-def linux_perf_alert(test_perf_alert, linux_signature):
-    # TODO: could we make this better instead of relying on non-obvious in-place changes?
-    return test_perf_alert
+def linux_perf_alert(linux_signature, test_perf_alert_summary) -> PerformanceAlert:
+    return create_perf_alert(summary=test_perf_alert_summary, series_signature=linux_signature)
 
 
 @pytest.fixture

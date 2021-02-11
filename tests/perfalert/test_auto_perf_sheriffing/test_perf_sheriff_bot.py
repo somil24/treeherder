@@ -2,13 +2,12 @@ from datetime import datetime, timedelta
 from json import JSONDecodeError
 
 import pytest
-
 from django.db import models
 
-from treeherder.model.models import Job
+from treeherder.model.models import Job, Push
+from treeherder.perf.auto_perf_sheriffing.perf_sheriff_bot import PerfSheriffBot
 from treeherder.perf.exceptions import MaxRuntimeExceeded
 from treeherder.perf.models import BackfillRecord
-from treeherder.perf.auto_perf_sheriffing.perf_sheriff_bot import PerfSheriffBot
 
 EPOCH = datetime.utcfromtimestamp(0)
 
@@ -149,7 +148,7 @@ def test_backfilling_gracefully_handles_invalid_json_contexts_without_blowing_up
     )
     try:
         sheriff_bot.sheriff(since=EPOCH, frameworks=['raptor', 'talos'], repositories=['autoland'])
-    except (JSONDecodeError, KeyError, Job.DoesNotExist):
+    except (JSONDecodeError, KeyError, Job.DoesNotExist, Push.DoesNotExist):
         pytest.fail()
 
     record_ready_for_processing.refresh_from_db()
