@@ -9,8 +9,10 @@ They then get an email that's ready-to-send via taskcluster.Notify service.
 from dataclasses import dataclass, asdict
 from abc import ABC, abstractmethod
 
-from typing import List
+from typing import List, Tuple
 
+from django.conf import settings
+from treeherder.model.models import Push
 from treeherder.perf.models import BackfillRecord, PerformanceSignature
 
 FXPERF_TEST_ENG_EMAIL = "perftest-alerts@mozilla.com"  # team' s email
@@ -99,8 +101,7 @@ class BackfillReportContent:
         alert = record.alert
         job_type = record.job_type
         total_backfills = record.total_backfills_triggered
-        # TODO: must add push range
-        push_range = 'must add'
+        push_range = self.__build_push_range(record.get_context())
 
         # some fields require adjustments
         summary_id = alert_summary.id
@@ -108,6 +109,29 @@ class BackfillReportContent:
         job_symbol = str(job_type)
 
         return f"| {summary_id} | {alert_id} | {job_symbol} | {total_backfills} | {push_range} |"
+
+    def __build_push_range(self, backfill_context: List[dict]) -> str:
+        """
+        Provides link to Treeherder' s Job view
+        """
+        from_push, to_push = self.__fetch_border_pushes(backfill_context)  # suspect range as tuple
+
+        repository = from_push.repository.name
+        from_change = from_push.revision
+        to_change = to_push.revision
+
+        return f"{settings.SITE_URL}/jobs?repo={repository}&fromchange={from_change}&tochange={to_change}"
+
+    def __fetch_border_pushes(self, backfill_context) -> Tuple[Push, Push]:
+        from_datapoint = backfill_context[0]
+        to_datapoint = backfill_context[-1]
+
+        from_push = from_datapoint['push_id']
+        to_push = to_datapoint['push_id']
+
+        from_push = Push.objects.get(id=from_push)
+        to_push = Push.objects.get(id=to_push)
+        return from_push, to_push
 
     def __str__(self):
         if self._raw_content is None:

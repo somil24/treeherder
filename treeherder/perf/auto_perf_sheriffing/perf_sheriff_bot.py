@@ -24,7 +24,7 @@ ACCESS_TOKEN = settings.PERF_SHERIFF_BOT_ACCESS_TOKEN
 
 
 # TODO:
-# * add push range
+# * proper exception handling for building push range
 # * raise proper exceptions from email composition
 # * improve linux_perf_alert fixture
 # * define testing strategy
