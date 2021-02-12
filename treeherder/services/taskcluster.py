@@ -2,7 +2,7 @@ import hashlib
 import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import List
+from typing import List, Tuple
 
 import jsone
 import taskcluster
@@ -27,9 +27,16 @@ class TaskclusterModel(ABC):
 
 
 class TaskclusterModelImpl(TaskclusterModel):
-    """Javascript -> Python rewrite of frontend's TaskclusterModel"""
+    """Javascript -> Python rewrite of frontend' s TaskclusterModel"""
 
-    def __init__(self, root_url, client_id=None, access_token=None):
+    def __init__(self, root_url, client_id=None, access_token=None, unit_testing_this=False):
+        # TODO: remove when backfill tool' soft launch is complete ->
+        if not unit_testing_this:
+            raise RuntimeError(
+                f"Must not instantiate real {self.__class__.__name__} instance "
+                f"before backfill tool' soft launch is complete"
+            )
+        # <- up to here
         options = {'rootUrl': root_url}
         credentials = {}
 
@@ -213,15 +220,23 @@ class NotifyNullObject(Notify):
 def notify_client_factory(
     root_url: str = None, client_id: str = None, access_token: str = None
 ) -> Notify:
-    if client_id and access_token:
+    client_id, access_token = autofind_unprovided(access_token, client_id)
+
+    if client_id and access_token:  # we're on production
         options = {
             'rootUrl': root_url or DEFAULT_ROOT_URL,
             'credentials': {
-                'clientId': client_id or settings.NOTIFY_CLIENT_ID,
-                'accessToken': access_token or settings.NOTIFY_ACCESS_TOKEN,
+                'clientId': client_id,
+                'accessToken': access_token,
             },
         }
         return NotifyAdapter(options)
 
-    # otherwise we're not on production & shouldn't email anything
+    # not on production and/or shouldn't email anything
     return NotifyNullObject()
+
+
+def autofind_unprovided(access_token, client_id) -> Tuple[str, str]:
+    client_id = client_id or settings.NOTIFY_CLIENT_ID
+    access_token = access_token or settings.NOTIFY_ACCESS_TOKEN
+    return client_id, access_token

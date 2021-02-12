@@ -25,11 +25,7 @@ ACCESS_TOKEN = settings.PERF_SHERIFF_BOT_ACCESS_TOKEN
 """
 TODO:
 * proper exception handling for building push range
-* define testing strategy
-    * notify_client_factory returns NotifyNullObject on non-production
-    * notify_client_factory returns NotifyAdapter on production
-    * ensure TaskclusterModelImpl not instantiated on production code (temporary test, until soft launch is complete)
-    * ensure BackfillTool cannot be instantiated with TaskclusterModelImpl
+* provide test coverage
     * test BackfillTool.backfill_job (maybe use job param instead of job_id)
     * TaskclusterModelImpl tests
         * refactor tests against protected methods by testing only public interface
@@ -37,9 +33,6 @@ TODO:
         * raises NotImplementedError on unknown action kind
     * BackfillNotificationWriter
         * just ensure there's a happy path testing for PerfSheriffBot
-    * DeleteNotificationWriter
-        * check for ValueError
-* provide test coverage
 * try to rename old BackfillReport model to reuse the name for email notification
 * run Pycharm evaluation over changed/added files
 """
