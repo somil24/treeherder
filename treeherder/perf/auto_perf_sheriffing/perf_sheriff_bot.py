@@ -22,13 +22,22 @@ logger = logging.getLogger(__name__)
 CLIENT_ID = settings.PERF_SHERIFF_BOT_CLIENT_ID
 ACCESS_TOKEN = settings.PERF_SHERIFF_BOT_ACCESS_TOKEN
 
-
-# TODO:
-# * proper exception handling for building push range
-# * define testing strategy
-# * provide test coverage
-# * try to rename old BackfillReport model to reuse the name for email notification
-# * run Pycharm evaluation over changed/added files
+"""
+TODO:
+* proper exception handling for building push range
+* define testing strategy
+    * notify_client_factory returns NotifyNullObject on non-production
+    * notify_client_factory returns NotifyAdapter on production
+    * TaskclusterModelImpl not instantiated on production code (temporary test, until soft launch is complete)
+    * TaskclusterModelImpl tests
+        * refactor tests against protected methods by testing only public interface
+        * extend coverage (define steps here...)
+    * BackfillNotificationWriter
+    * DeleteNotificationWriter
+* provide test coverage
+* try to rename old BackfillReport model to reuse the name for email notification
+* run Pycharm evaluation over changed/added files
+"""
 
 
 class PerfSheriffBot:

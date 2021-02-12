@@ -49,15 +49,15 @@ class EmailWriter(ABC):
 
     @abstractmethod
     def _write_address(self):
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def _write_subject(self):
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def _write_content(self, must_mention: List[object]):
-        pass
+        pass  # pragma: no cover
 
     @classmethod
     def __ensure_its_list(cls, must_mention) -> List[object]:

@@ -92,7 +92,6 @@ def test_records_remain_unchanged_if_no_backfills_left(
     assert not has_changed(record_ready_for_processing)
 
 
-# @pytest.mark.xfail(reason="TODO: fix test; probably requires some refactoring")
 def test_records_and_db_limits_remain_unchanged_if_runtime_exceeded(
     report_maintainer_mock,
     backfill_tool_mock,

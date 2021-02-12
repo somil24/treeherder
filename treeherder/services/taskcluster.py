@@ -23,7 +23,7 @@ class TaskclusterModel(ABC):
 
     @abstractmethod
     def trigger_action(self, action, task_id, decision_task_id, input, root_url=None) -> str:
-        pass
+        pass  # pragma: no cover
 
 
 class TaskclusterModelImpl(TaskclusterModel):
@@ -194,7 +194,7 @@ class TaskclusterModelProxy(TaskclusterModel):
 class Notify(ABC):
     @abstractmethod
     def email(self, *args, **kwargs):
-        pass
+        pass  # pragma: no cover
 
 
 class NotifyAdapter(Notify):
