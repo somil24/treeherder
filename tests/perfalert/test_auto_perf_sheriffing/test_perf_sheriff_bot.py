@@ -113,16 +113,18 @@ def test_records_and_db_limits_remain_unchanged_if_runtime_exceeded(
     assert not has_changed(sheriff_settings)
 
 
-@pytest.mark.xfail(reason="TODO: fix test; probably requires some refactoring")
 def test_db_limits_update_if_backfills_left(
     report_maintainer_mock,
     backfill_tool_mock,
     secretary,
     record_ready_for_processing,
     sheriff_settings,
+    notify_client_mock,
 ):
     initial_backfills = secretary.backfills_left(on_platform='linux')
-    sheriff_bot = PerfSheriffBot(report_maintainer_mock, backfill_tool_mock, secretary)
+    sheriff_bot = PerfSheriffBot(
+        report_maintainer_mock, backfill_tool_mock, secretary, notify_client_mock
+    )
     sheriff_bot._backfill()
 
     record_ready_for_processing.refresh_from_db()

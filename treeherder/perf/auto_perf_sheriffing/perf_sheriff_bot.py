@@ -9,7 +9,7 @@ from django.conf import settings
 from django.db.models import QuerySet
 from taskcluster.helper import TaskclusterConfig
 
-from treeherder.model.models import JobType, Job, Push
+from treeherder.model.models import Job, Push
 from treeherder.perf.auto_perf_sheriffing.backfill_reports import BackfillReportMaintainer
 from treeherder.perf.auto_perf_sheriffing.backfill_tool import BackfillTool
 from treeherder.perf.auto_perf_sheriffing.secretary_tool import SecretaryTool
@@ -28,12 +28,17 @@ TODO:
 * define testing strategy
     * notify_client_factory returns NotifyNullObject on non-production
     * notify_client_factory returns NotifyAdapter on production
-    * TaskclusterModelImpl not instantiated on production code (temporary test, until soft launch is complete)
+    * ensure TaskclusterModelImpl not instantiated on production code (temporary test, until soft launch is complete)
+    * ensure BackfillTool cannot be instantiated with TaskclusterModelImpl
+    * test BackfillTool.backfill_job (maybe use job param instead of job_id)
     * TaskclusterModelImpl tests
         * refactor tests against protected methods by testing only public interface
-        * extend coverage (define steps here...)
+        * can instantiate with & without credentials
+        * raises NotImplementedError on unknown action kind
     * BackfillNotificationWriter
+        * just ensure there's a happy path testing for PerfSheriffBot
     * DeleteNotificationWriter
+        * check for ValueError
 * provide test coverage
 * try to rename old BackfillReport model to reuse the name for email notification
 * run Pycharm evaluation over changed/added files
@@ -118,7 +123,6 @@ class PerfSheriffBot:
 
     def _backfill_record(self, record: BackfillRecord, left: int) -> Tuple[int, int]:
         consumed = 0
-        job_type: JobType = None
 
         try:
             context = record.get_context()
@@ -131,20 +135,26 @@ class PerfSheriffBot:
                 if left <= 0 or self.runtime_exceeded():
                     break
                 try:
-                    job_id = data_point['job_id']
-                    self.backfill_tool.backfill_job(job_id)
+                    using_job_id = data_point['job_id']
+                    self.backfill_tool.backfill_job(using_job_id)
                     left, consumed = left - 1, consumed + 1
                 except (KeyError, CannotBackfill, Exception) as ex:
                     logger.debug(f'Failed to backfill record {record.id}: {ex}')
                 else:
-                    if job_type is None:
-                        record.job_type = Job.objects.get(id=job_id).job_type
+                    self.__try_setting_job_type_of(record, using_job_id)
 
             success, outcome = self._note_backfill_outcome(record, len(context), consumed)
             log_level = INFO if success else WARNING
             logger.log(log_level, f'{outcome} (for backfill record {record.id})')
 
         return left, consumed
+
+    def __try_setting_job_type_of(self, record, job_id):
+        try:
+            if record.job_type is None:
+                record.job_type = Job.objects.get(id=job_id).job_type
+        except Job.DoesNotExist as ex:
+            logger.warning(ex)
 
     def _note_backfill_outcome(
         self, record: BackfillRecord, to_backfill: int, actually_backfilled: int
