@@ -24,14 +24,6 @@ ACCESS_TOKEN = settings.PERF_SHERIFF_BOT_ACCESS_TOKEN
 
 """
 TODO:
-* proper exception handling for building push range
-* provide test coverage
-    * test BackfillTool.backfill_job (maybe use job param instead of job_id)
-    * TaskclusterModelImpl tests
-        * refactor tests against protected methods by testing only public interface
-        * can instantiate with & without credentials
-        * raises NotImplementedError on unknown action kind
-* try to rename old BackfillReport model to reuse the name for email notification
 * run Pycharm evaluation over changed/added files
 """
 

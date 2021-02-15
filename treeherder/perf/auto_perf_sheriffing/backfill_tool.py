@@ -1,6 +1,7 @@
 import logging
 
 from django.core.exceptions import ObjectDoesNotExist
+from typing import Union
 
 from treeherder.model.models import Job
 from treeherder.perf.exceptions import CannotBackfill
@@ -21,8 +22,9 @@ class BackfillTool:
 
         self.__taskcluster = taskcluster_model
 
-    def backfill_job(self, job_id: str) -> str:
-        job = self._fetch_job(job_id)
+    def backfill_job(self, job: Union[Job, str]) -> str:
+        if not isinstance(job, Job):
+            job = self._fetch_job_by_id(job)
 
         self.assert_backfill_ability(job)
 
@@ -46,7 +48,7 @@ class BackfillTool:
             raise CannotBackfill("Try repository isn't suited for backfilling.")
 
     @staticmethod
-    def _fetch_job(job_id: str) -> Job:
+    def _fetch_job_by_id(job_id: str) -> Job:
         try:
             return Job.objects.get(id=job_id)
         except ObjectDoesNotExist:

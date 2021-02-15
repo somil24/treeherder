@@ -32,7 +32,16 @@ def expected_backfill_task():
 
 
 class TestTaskclusterModelImpl:
-    FAKE_OPTIONS = ('https://fakerooturl.org', 'FAKE_CLIENT_ID', 'FAKE_ACCESS_TOKEN')
+    FAKE_ROOT_URL = 'https://fakerooturl.org'
+    FAKE_OPTIONS = (FAKE_ROOT_URL, 'FAKE_CLIENT_ID', 'FAKE_ACCESS_TOKEN')
+
+    def test_can_instantiate_without_credentials(self):
+        try:
+            _ = TaskclusterModelImpl(self.FAKE_ROOT_URL, unit_testing_this=True)
+        except Exception:
+            pytest.fail(
+                "Should be able to instantiate TaskclusterModelImpl without providing credentials."
+            )
 
     # TODO: remove when backfill tool' soft launch is complete ->
     def test_cannot_instantiate_on_production(self):
