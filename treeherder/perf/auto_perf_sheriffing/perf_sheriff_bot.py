@@ -31,8 +31,6 @@ TODO:
         * refactor tests against protected methods by testing only public interface
         * can instantiate with & without credentials
         * raises NotImplementedError on unknown action kind
-    * BackfillNotificationWriter
-        * just ensure there's a happy path testing for PerfSheriffBot
 * try to rename old BackfillReport model to reuse the name for email notification
 * run Pycharm evaluation over changed/added files
 """

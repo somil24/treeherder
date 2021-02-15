@@ -125,7 +125,7 @@ def test_db_limits_update_if_backfills_left(
     sheriff_bot = PerfSheriffBot(
         report_maintainer_mock, backfill_tool_mock, secretary, notify_client_mock
     )
-    sheriff_bot._backfill()
+    sheriff_bot.sheriff(since=EPOCH, frameworks=['raptor', 'talos'], repositories=['autoland'])
 
     record_ready_for_processing.refresh_from_db()
     assert record_ready_for_processing.status == BackfillRecord.BACKFILLED

@@ -23,4 +23,4 @@ class TestDeleteNotificationWriter:
                     "DeleteNotificationWriter must be able to provide a default content, "
                     "even if there's nothing to mention."
                 )
-            raise ex
+            raise ex  # unexpected programming error
