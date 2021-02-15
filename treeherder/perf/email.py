@@ -9,7 +9,7 @@ They then get an email that's ready-to-send via taskcluster.Notify service.
 from dataclasses import dataclass, asdict
 from abc import ABC, abstractmethod
 
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 from django.conf import settings
 from treeherder.model.models import Push
@@ -32,7 +32,7 @@ class EmailWriter(ABC):
     def __init__(self):
         self._email = Email()
 
-    def prepare_new_email(self, must_mention: List[object]) -> dict:
+    def prepare_new_email(self, must_mention: Union[List[object], object]) -> dict:
         """
         Template method
         """

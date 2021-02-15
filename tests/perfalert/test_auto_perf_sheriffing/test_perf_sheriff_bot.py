@@ -45,12 +45,13 @@ def test_assert_can_run_doesnt_throw_exception_when_enough_time_left(
     report_maintainer_mock,
     backfill_tool_mock,
     secretary,
+    notify_client_mock,
     record_ready_for_processing,
     sheriff_settings,
 ):
     enough_time_left = timedelta(minutes=10)
     sheriff_settings = PerfSheriffBot(
-        report_maintainer_mock, backfill_tool_mock, secretary, enough_time_left
+        report_maintainer_mock, backfill_tool_mock, secretary, notify_client_mock, enough_time_left
     )
 
     try:

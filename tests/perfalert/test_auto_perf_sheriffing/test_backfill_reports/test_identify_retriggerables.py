@@ -20,7 +20,7 @@ def test_identify_retriggerables_as_unit():
         _ = IdentifyAlertRetriggerables(max_data_points=4, time_interval=one_day)
 
     with pytest.raises(TypeError):
-        _ = IdentifyAlertRetriggerables(max_data_points=5, time_interval=1)
+        _ = IdentifyAlertRetriggerables(max_data_points=5, time_interval=1)  # noqa
 
     # its small private methods
     annotated_data_points = [
@@ -32,7 +32,7 @@ def test_identify_retriggerables_as_unit():
         {'job_id': 6, 'push_id': 3},
     ]
     operation = IdentifyAlertRetriggerables(max_data_points=5, time_interval=one_day)
-    flattened_data_points = operation._one_data_point_per_push(annotated_data_points)
+    flattened_data_points = operation._one_data_point_per_push(annotated_data_points)  # noqa
     push_counter = Counter([data_point['push_id'] for data_point in flattened_data_points])
 
     assert max(count for count in push_counter.values()) == 1
@@ -60,10 +60,10 @@ def test_identify_retriggerables_selects_all_data_points(gapped_performance_data
 
     # timestamps are around November 13, 2019
     push_timestamps = list(map(get_key("push_timestamp"), data_points_to_retrigger))
-    min_push_timestmap = min(push_timestamps)
+    min_push_timestamp = min(push_timestamps)
     max_push_timestamp = max(push_timestamps)
 
-    assert datetime.datetime(year=2013, month=11, day=12) <= min_push_timestmap
+    assert datetime.datetime(year=2013, month=11, day=12) <= min_push_timestamp
     assert max_push_timestamp <= datetime.datetime(year=2013, month=11, day=14)
 
 

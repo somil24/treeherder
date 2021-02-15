@@ -81,7 +81,7 @@ def test_cycle_performance_data(
         value=1.0,
     )
 
-    # the performance datum that which we're targetting
+    # the performance datum that which we're targeting
     PerformanceDatum.objects.create(
         id=2,
         repository=test_repository,

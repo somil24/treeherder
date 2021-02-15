@@ -108,9 +108,9 @@ def test_reports_are_updated_after_alert_summaries_change(
         since=EPOCH, frameworks=[test_perf_framework.name], repositories=[test_repository.name]
     )
 
-    report_timestamps, records_timestmaps = __fetch_report_timestamps(test_perf_alert_summary)
+    report_timestamps, records_timestamps = __fetch_report_timestamps(test_perf_alert_summary)
     assert initial_report_timestamps != report_timestamps
-    assert initial_records_timestamps != records_timestmaps
+    assert initial_records_timestamps != records_timestamps
 
 
 def __fetch_report_timestamps(test_perf_alert_summary) -> Tuple:

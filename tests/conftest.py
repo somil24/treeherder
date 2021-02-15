@@ -493,7 +493,7 @@ def test_perf_signature(test_repository, test_perf_framework) -> PerformanceSign
 
 
 def create_perf_signature(
-    perf_framework, repository, platform: MachinePlatform
+    perf_framework, repository, machine_platform: MachinePlatform
 ) -> PerformanceSignature:
     option = Option.objects.create(name='opt')
     option_collection = OptionCollection.objects.create(
@@ -504,7 +504,7 @@ def create_perf_signature(
         repository=repository,
         signature_hash=(40 * 't'),
         framework=perf_framework,
-        platform=platform,
+        platform=machine_platform,
         option_collection=option_collection,
         suite='mysuite',
         test='mytest',

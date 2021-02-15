@@ -28,7 +28,7 @@ def original_task():
 
 @pytest.fixture(scope="module")
 def expected_backfill_task():
-    return load_json_fixture('backfilltask.json')
+    return load_json_fixture('backfillTask.json')
 
 
 class TestTaskclusterModelImpl:
@@ -38,7 +38,7 @@ class TestTaskclusterModelImpl:
     def test_can_instantiate_without_credentials(self):
         try:
             _ = TaskclusterModelImpl(self.FAKE_ROOT_URL, unit_testing_this=True)
-        except Exception:
+        except ValueError:
             pytest.fail(
                 "Should be able to instantiate TaskclusterModelImpl without providing credentials."
             )
@@ -87,7 +87,7 @@ class TestTaskclusterModelImpl:
 
 
 class TestNotifyClientFactory:
-    def test_returns_null_object_on_nonproduction(self):
+    def test_returns_null_object_on_non_production(self):
         notify = notify_client_factory()
         assert isinstance(notify, NotifyNullObject)
 

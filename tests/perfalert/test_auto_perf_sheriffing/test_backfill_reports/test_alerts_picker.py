@@ -59,9 +59,9 @@ def test_extract_important_alerts(
     number_of = count_alert_types(important_alerts)
     assert number_of[True] == 4
     assert number_of[False] == 1
-    for idx, alert in enumerate(important_alerts):
-        assert alert.series_signature.platform.platform == expected_platforms_order[idx]
-        assert alert.amount_pct == expected_magnitudes_order[idx]
+    for idx, imp_alert in enumerate(important_alerts):
+        assert imp_alert.series_signature.platform.platform == expected_platforms_order[idx]
+        assert imp_alert.amount_pct == expected_magnitudes_order[idx]
 
 
 def test_ensure_alerts_variety(
@@ -112,7 +112,7 @@ def test_ensure_alerts_variety(
 
 
 @pytest.mark.parametrize(
-    ('max_alerts, expected_alerts_platforms'),
+    ('max_alerts, expected_alerts_platforms'),  # noqa
     [
         (5, ('windows10', 'windows7', 'linux', 'osx', 'android')),
         (8, ('windows10', 'windows7', 'linux', 'osx', 'android', 'windows10', 'windows7', 'linux')),
@@ -143,7 +143,7 @@ def test_os_relevance():
     assert 1 == picker._os_relevance('android')
 
     with pytest.raises(ValueError):
-        picker._os_relevance('some wierd OS')
+        picker._os_relevance('some weird OS')
 
 
 def test_has_relevant_platform(test_many_various_alerts, test_bad_platform_names):
@@ -200,6 +200,6 @@ def test_multi_criterion_sort(test_many_various_alerts):
     number_of = count_alert_types(ordered_alerts)
     assert number_of[True] == 5
     assert number_of[False] == 5
-    for idx, alert in enumerate(ordered_alerts):
-        assert alert.series_signature.platform.platform == expected_platforms_order[idx]
-        assert alert.amount_pct == expected_magnitudes_order[idx]
+    for idx, ord_alert in enumerate(ordered_alerts):
+        assert ord_alert.series_signature.platform.platform == expected_platforms_order[idx]
+        assert ord_alert.amount_pct == expected_magnitudes_order[idx]

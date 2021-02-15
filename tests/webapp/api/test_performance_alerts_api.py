@@ -16,26 +16,24 @@ def test_alerts_get(client, test_repository, test_perf_alert):
     assert resp.json()['next'] is None
     assert resp.json()['previous'] is None
     assert len(resp.json()['results']) == 1
-    assert set(resp.json()['results'][0].keys()) == set(
-        [
-            'amount_pct',
-            'amount_abs',
-            'id',
-            'is_regression',
-            'starred',
-            'manually_created',
-            'new_value',
-            'prev_value',
-            'related_summary_id',
-            'series_signature',
-            'summary_id',
-            'status',
-            't_value',
-            'classifier',
-            'classifier_email',
-            'backfill_record',
-        ]
-    )
+    assert set(resp.json()['results'][0].keys()) == {
+        'amount_pct',
+        'amount_abs',
+        'id',
+        'is_regression',
+        'starred',
+        'manually_created',
+        'new_value',
+        'prev_value',
+        'related_summary_id',
+        'series_signature',
+        'summary_id',
+        'status',
+        't_value',
+        'classifier',
+        'classifier_email',
+        'backfill_record',
+    }
     assert resp.json()['results'][0]['related_summary_id'] is None
 
 
@@ -102,15 +100,9 @@ def test_reassign_different_repository(
     test_perf_alert_summary_2.repository = test_repository_2
     test_perf_alert_summary_2.save()
 
-    # reassign to summary with different repository, should fail
-    resp = authorized_sheriff_client.put(
-        reverse('performance-alerts-list') + '1/',
-        {'related_summary_id': test_perf_alert_summary_2.id, 'status': PerformanceAlert.REASSIGNED},
+    assert_incompatible_alert_assignment_fails(
+        authorized_sheriff_client, test_perf_alert, test_perf_alert_summary_2
     )
-    assert resp.status_code == 400
-    test_perf_alert.refresh_from_db()
-    assert test_perf_alert.related_summary_id is None
-    assert test_perf_alert.status == PerformanceAlert.UNTRIAGED
 
     # mark downstream of summary with different repository,
     # should succeed
@@ -132,20 +124,28 @@ def test_reassign_different_framework(
     test_perf_alert,
     test_perf_alert_summary_2,
 ):
-    # try to assign to an alert with a different framework,
-    # should fail
+    # verify that we can't reassign to another performance alert summary
+    # with a different framework
     framework_2 = PerformanceFramework.objects.create(name='test_talos_2', enabled=True)
     test_perf_alert_summary_2.framework = framework_2
     test_perf_alert_summary_2.save()
 
+    assert_incompatible_alert_assignment_fails(
+        authorized_sheriff_client, test_perf_alert, test_perf_alert_summary_2
+    )
+
+
+def assert_incompatible_alert_assignment_fails(
+    authorized_sheriff_client, perf_alert, incompatible_summary
+):
     resp = authorized_sheriff_client.put(
         reverse('performance-alerts-list') + '1/',
-        {'related_summary_id': test_perf_alert_summary_2.id, 'status': PerformanceAlert.REASSIGNED},
+        {'related_summary_id': incompatible_summary.id, 'status': PerformanceAlert.REASSIGNED},
     )
     assert resp.status_code == 400
-    test_perf_alert.refresh_from_db()
-    assert test_perf_alert.related_summary_id is None
-    assert test_perf_alert.status == PerformanceAlert.UNTRIAGED
+    perf_alert.refresh_from_db()
+    assert perf_alert.related_summary_id is None
+    assert perf_alert.status == PerformanceAlert.UNTRIAGED
 
 
 @pytest.fixture
@@ -442,9 +442,9 @@ def test_nudge_raises_exception_when_no_perf_data(
 def test_nudge_recalculates_alert_properties(
     authorized_sheriff_client, test_perf_alert, test_perf_alert_summary, test_perf_data
 ):
-    def _get_alert_properties(test_perf_alert):
+    def _get_alert_properties(perf_alert):
         prop_names = ['amount_pct', 'amount_abs', 'prev_value', 'new_value', 't_value']
-        return [getattr(test_perf_alert, prop_name) for prop_name in prop_names]
+        return [getattr(perf_alert, prop_name) for prop_name in prop_names]
 
     # let's update the performance data
     # so that recalculation produces new results
@@ -559,7 +559,7 @@ def test_related_alerts_timestamps_via_endpoint(
     test_perf_alert_summary,
     test_perf_alert_summary_2,
 ):
-    # downstream/reassgin use case
+    # downstream/reassign use case
     assert test_perf_alert.first_triaged is None
     assert test_perf_alert_summary.first_triaged is None
     assert test_perf_alert_summary_2.first_triaged is None
@@ -612,23 +612,25 @@ def associate_perf_data_to_alert(test_perf_data, test_perf_alert):
 def dump_vars(alert_summaries, perf_data, alerts=None):
     from pprint import pprint
 
-    def dump_alert(alert):
+    def dump(an_alert):
         pprint(
-            'Alert(id={0.id}, summary_id={0.summary_id}, push_id={0.summary.push_id}, prev_push_id={0.summary.prev_push_id})'.format(
-                alert
-            )
+            f"Alert("
+            f"id={an_alert.id}, "
+            f"summary_id={an_alert.summary_id}, "
+            f"push_id={an_alert.summary.push_id}, "
+            f"prev_push_id={an_alert.summary.prev_push_id}"
+            f")"
         )
 
     for summary in alert_summaries:
         pprint(
-            'AlertSummary(id={0.id}, push_id={0.push_id}, prev_push_id={0.prev_push_id}) has following alerts: '.format(
-                summary
-            )
+            f"AlertSummary("
+            f"id={summary.id}, push_id={summary.push_id}, prev_push_id={summary.prev_push_id}) has following alerts: "
         )
         for alert in summary.alerts.all():
-            dump_alert(alert)
+            dump(alert)
     if alerts is not None:
         for alert in alerts:
-            dump_alert(alert)
+            dump(alert)
     for perf_datum in perf_data:
         pprint('PerfData(id={0.push_id}, push_timestamp={0.push_timestamp})'.format(perf_datum))

@@ -22,11 +22,6 @@ logger = logging.getLogger(__name__)
 CLIENT_ID = settings.PERF_SHERIFF_BOT_CLIENT_ID
 ACCESS_TOKEN = settings.PERF_SHERIFF_BOT_ACCESS_TOKEN
 
-"""
-TODO:
-* run Pycharm evaluation over changed/added files
-"""
-
 
 class PerfSheriffBot:
     """

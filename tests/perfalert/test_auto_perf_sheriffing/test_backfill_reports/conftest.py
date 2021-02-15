@@ -109,7 +109,7 @@ def create_alerts(create_perf_signature):
 # For testing AlertsPicker
 @pytest.fixture
 def test_many_various_alerts():
-    alerts = [Mock(spec=PerformanceAlert) for i in range(10)]
+    alerts = [Mock(spec=PerformanceAlert) for _ in range(10)]
     platforms = (
         'windows10-64-shippable',
         'windows10-64-shippable',
@@ -135,7 +135,7 @@ def test_many_various_alerts():
 
 @pytest.fixture
 def test_few_various_alerts():
-    alerts = [Mock(spec=PerformanceAlert) for i in range(2)]
+    alerts = [Mock(spec=PerformanceAlert) for _ in range(2)]
     platforms = ('windows7-32-shippable', 'linux64-shippable-qr')
     reversed_magnitudes = list(reversed(range(len(alerts))))
     toggle = True
@@ -149,7 +149,7 @@ def test_few_various_alerts():
 
 @pytest.fixture
 def test_few_regressions():
-    alerts = [Mock(spec=PerformanceAlert) for i in range(5)]
+    alerts = [Mock(spec=PerformanceAlert) for _ in range(5)]
     platforms = (
         'windows10-64-shippable',
         'windows7-32-shippable',
@@ -175,11 +175,11 @@ def test_few_improvements(test_few_regressions):
 
 @pytest.fixture
 def test_bad_platform_names():
-    alerts = [Mock(spec=PerformanceAlert) for i in range(4)]
+    alerts = [Mock(spec=PerformanceAlert) for _ in range(4)]
     platforms = (
-        'rfvrtgb',
+        'rfvrtgb',  # noqa
         '4.0',
-        '54dcwec58',
+        '54dcwec58',  # noqa
         '8y6 t g',
     )
     for idx, alert in enumerate(alerts):
