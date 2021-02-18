@@ -13,7 +13,7 @@ from treeherder.model.models import Job, Push
 from treeherder.perf.auto_perf_sheriffing.backfill_reports import BackfillReportMaintainer
 from treeherder.perf.auto_perf_sheriffing.backfill_tool import BackfillTool
 from treeherder.perf.auto_perf_sheriffing.secretary_tool import SecretaryTool
-from treeherder.perf.email import BackfillNotificationWriter
+from treeherder.perf.email import BackfillNotificationWriter, EmailWriter
 from treeherder.perf.exceptions import CannotBackfill, MaxRuntimeExceeded
 from treeherder.perf.models import BackfillRecord, BackfillReport
 
@@ -37,14 +37,17 @@ class PerfSheriffBot:
         secretary_tool: SecretaryTool,
         notify_client: taskcluster.Notify,
         max_runtime: timedelta = None,
+        email_writer: EmailWriter = None,
     ):
         self.report_maintainer = report_maintainer
         self.backfill_tool = backfill_tool
         self.secretary = secretary_tool
         self._notify = notify_client
-        self._woke_up_time = datetime.now()
-        self.backfilled_records = []  # useful for reporting backfill outcome
         self._max_runtime = self.DEFAULT_MAX_RUNTIME if max_runtime is None else max_runtime
+        self._email_writer = email_writer or BackfillNotificationWriter()
+
+        self._wake_up_time = datetime.now()
+        self.backfilled_records = []  # useful for reporting backfill outcome
 
     def sheriff(self, since: datetime, frameworks: List[str], repositories: List[str]):
         self.assert_can_run()
@@ -62,7 +65,7 @@ class PerfSheriffBot:
         self._notify_backfill_outcome()
 
     def runtime_exceeded(self) -> bool:
-        elapsed_runtime = datetime.now() - self._woke_up_time
+        elapsed_runtime = datetime.now() - self._wake_up_time
         return self._max_runtime <= elapsed_runtime
 
     def assert_can_run(self):
@@ -90,7 +93,8 @@ class PerfSheriffBot:
         self.secretary.consume_backfills('linux', total_consumed)
         logger.debug(f'{self.__class__.__name__} has {left} backfills left.')
 
-    def __fetch_records_requiring_backfills(self) -> QuerySet:
+    @staticmethod
+    def __fetch_records_requiring_backfills() -> QuerySet:
         records_to_backfill = BackfillRecord.objects.select_related(
             'alert', 'alert__series_signature', 'alert__series_signature__platform'
         ).filter(
@@ -127,15 +131,17 @@ class PerfSheriffBot:
 
         return left, consumed
 
-    def __try_setting_job_type_of(self, record, job_id):
+    @staticmethod
+    def __try_setting_job_type_of(record, job_id):
         try:
             if record.job_type is None:
                 record.job_type = Job.objects.get(id=job_id).job_type
         except Job.DoesNotExist as ex:
             logger.warning(ex)
 
+    @staticmethod
     def _note_backfill_outcome(
-        self, record: BackfillRecord, to_backfill: int, actually_backfilled: int
+        record: BackfillRecord, to_backfill: int, actually_backfilled: int
     ) -> Tuple[bool, str]:
         success = False
 
@@ -160,9 +166,8 @@ class PerfSheriffBot:
         record.save()
         return success, outcome
 
-    def _is_queue_overloaded(
-        self, provisioner_id: str, worker_type: str, acceptable_limit=100
-    ) -> bool:
+    @staticmethod
+    def _is_queue_overloaded(provisioner_id: str, worker_type: str, acceptable_limit=100) -> bool:
         """
         Helper method for PerfSheriffBot to check load on processing queue.
         Usage example: _queue_is_too_loaded('gecko-3', 'b-linux')
@@ -177,9 +182,8 @@ class PerfSheriffBot:
         return pending_tasks_count > acceptable_limit
 
     def _notify_backfill_outcome(self):
-        email_writer = BackfillNotificationWriter()
         try:
-            backfill_notification = email_writer.prepare_new_email(self.backfilled_records)
+            backfill_notification = self._email_writer.prepare_new_email(self.backfilled_records)
         except (JSONDecodeError, KeyError, Push.DoesNotExist) as ex:
             logger.warning(f"Failed to email backfill report.{type(ex)}: {ex}")
             return

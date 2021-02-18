@@ -1,11 +1,13 @@
 from datetime import datetime, timedelta
 from json import JSONDecodeError
+from unittest.mock import MagicMock
 
 import pytest
 from django.db import models
 
 from treeherder.model.models import Job, Push
 from treeherder.perf.auto_perf_sheriffing.perf_sheriff_bot import PerfSheriffBot
+from treeherder.perf.email import BackfillNotificationWriter
 from treeherder.perf.exceptions import MaxRuntimeExceeded
 from treeherder.perf.models import BackfillRecord
 
@@ -24,6 +26,81 @@ def has_changed(orm_object: models.Model) -> bool:
     return False
 
 
+class TestEmailIntegration:
+    def test_email_is_sent_after_successful_backfills(
+        self,
+        report_maintainer_mock,
+        backfill_tool_mock,
+        secretary,
+        record_ready_for_processing,
+        sheriff_settings,
+        notify_client_mock,
+    ):
+
+        sheriff_bot = PerfSheriffBot(
+            report_maintainer_mock,
+            backfill_tool_mock,
+            secretary,
+            notify_client_mock,
+            email_writer=self.email_writer_mock(),
+        )
+        sheriff_bot.sheriff(since=EPOCH, frameworks=['raptor', 'talos'], repositories=['autoland'])
+        record_ready_for_processing.refresh_from_db()
+
+        assert notify_client_mock.email.call_count == 1
+
+    def test_no_email_is_sent_if_context_is_too_corrupt_to_be_actionable(
+        self,
+        report_maintainer_mock,
+        backfill_tool_mock,
+        secretary,
+        record_ready_for_processing,
+        sheriff_settings,
+        notify_client_mock,
+        broken_context_str,
+        # Note: parametrizes the test
+    ):
+        record_ready_for_processing.context = broken_context_str
+        record_ready_for_processing.save()
+
+        sheriff_bot = PerfSheriffBot(
+            report_maintainer_mock,
+            backfill_tool_mock,
+            secretary,
+            notify_client_mock,
+        )
+        sheriff_bot.sheriff(since=EPOCH, frameworks=['raptor', 'talos'], repositories=['autoland'])
+
+        assert notify_client_mock.email.call_count == 0
+
+    def test_no_email_is_sent_if_runtime_exceeded(
+        self,
+        report_maintainer_mock,
+        backfill_tool_mock,
+        secretary,
+        record_ready_for_processing,
+        sheriff_settings,
+        notify_client_mock,
+    ):
+        no_time_left = timedelta(seconds=0)
+
+        sheriff_bot = PerfSheriffBot(
+            report_maintainer_mock, backfill_tool_mock, secretary, notify_client_mock, no_time_left
+        )
+        try:
+            sheriff_bot.sheriff(
+                since=EPOCH, frameworks=['raptor', 'talos'], repositories=['autoland']
+            )
+        except MaxRuntimeExceeded:
+            pass
+
+        assert notify_client_mock.email.call_count == 0
+
+    @staticmethod
+    def email_writer_mock():
+        return MagicMock(spec=BackfillNotificationWriter())
+
+
 def test_assert_can_run_throws_exception_when_runtime_exceeded(
     report_maintainer_mock,
     backfill_tool_mock,
@@ -33,12 +110,12 @@ def test_assert_can_run_throws_exception_when_runtime_exceeded(
     notify_client_mock,
 ):
     no_time_left = timedelta(seconds=0)
-    sheriff_settings = PerfSheriffBot(
+    sheriff_bot = PerfSheriffBot(
         report_maintainer_mock, backfill_tool_mock, secretary, notify_client_mock, no_time_left
     )
 
     with pytest.raises(MaxRuntimeExceeded):
-        sheriff_settings.assert_can_run()
+        sheriff_bot.assert_can_run()
 
 
 def test_assert_can_run_doesnt_throw_exception_when_enough_time_left(
@@ -50,12 +127,12 @@ def test_assert_can_run_doesnt_throw_exception_when_enough_time_left(
     sheriff_settings,
 ):
     enough_time_left = timedelta(minutes=10)
-    sheriff_settings = PerfSheriffBot(
+    sheriff_bot = PerfSheriffBot(
         report_maintainer_mock, backfill_tool_mock, secretary, notify_client_mock, enough_time_left
     )
 
     try:
-        sheriff_settings.assert_can_run()
+        sheriff_bot.assert_can_run()
     except MaxRuntimeExceeded:
         pytest.fail()
 

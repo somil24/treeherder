@@ -59,8 +59,8 @@ class EmailWriter(ABC):
     def _write_content(self, must_mention: List[object]):
         pass  # pragma: no cover
 
-    @classmethod
-    def __ensure_its_list(cls, must_mention) -> List[object]:
+    @staticmethod
+    def __ensure_its_list(must_mention) -> List[object]:
         if not isinstance(must_mention, List):
             must_mention = [must_mention]
         return must_mention
@@ -116,6 +116,8 @@ class BackfillReportContent:
         """
         from_push, to_push = self.__fetch_border_pushes(backfill_context)  # suspect range as tuple
 
+        # TODO: repository should be provided by upstream (AKA backfill context)
+        #  to save some database calls
         repository = from_push.repository.name
         from_change = from_push.revision
         to_change = to_push.revision
@@ -154,7 +156,7 @@ class BackfillNotificationWriter(EmailWriter):
 
 
 # For performance data cycling
-class DeleteReportContent:
+class DeletionReportContent:
     DESCRIPTION = """Perfherder removes performance data that is older than one year and in some cases even sooner, leaving behind performance signatures that aren't associated to any data point. These as well need to be removed.
     > __Here's a summary of recently deleted performance signatures:__
     ---
@@ -208,7 +210,7 @@ class DeleteReportContent:
         return self._raw_content
 
 
-class DeleteNotificationWriter(EmailWriter):
+class DeletionNotificationWriter(EmailWriter):
     def _write_address(self):
         self._email.address = FXPERF_TEST_ENG_EMAIL
 
@@ -216,7 +218,7 @@ class DeleteNotificationWriter(EmailWriter):
         self._email.subject = "Summary of deleted Performance Signatures"
 
     def _write_content(self, must_mention: List[PerformanceSignature]):
-        content = DeleteReportContent()
+        content = DeletionReportContent()
         content.include_signatures(must_mention)
 
         self._email.content = str(content)

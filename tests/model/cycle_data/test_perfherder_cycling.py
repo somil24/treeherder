@@ -17,7 +17,6 @@ from treeherder.model.data_cycling.removal_strategies import (
     StalledDataRemoval,
 )
 from treeherder.model.models import Push
-from treeherder.perf.email import DeleteReportContent, DeleteNotificationWriter
 from treeherder.perf.exceptions import MaxRuntimeExceeded
 from treeherder.perf.models import (
     PerformanceDatum,
@@ -280,23 +279,6 @@ def test_signature_remover(
     assert taskcluster_notify_mock.email.call_count == 1
     assert len(PerformanceSignature.objects.all()) == 1
     assert PerformanceSignature.objects.first() == test_perf_signature
-
-
-def test_email_content(test_perf_signature):
-    delete_email_writer = DeleteNotificationWriter()
-    delete_email_writer.prepare_new_email(test_perf_signature)
-    expected_result = DeleteReportContent.DESCRIPTION + DeleteReportContent.TABLE_HEADERS
-    expected_result += (
-        """| {repository} | {framework} | {platform} | {suite} | {application} |""".format(
-            repository=test_perf_signature.repository.name,
-            framework=test_perf_signature.framework.name,
-            platform=test_perf_signature.platform.platform,
-            suite=test_perf_signature.suite,
-            application=test_perf_signature.application,
-        )
-    )
-    expected_result += '\n'
-    assert expected_result == delete_email_writer.email["content"]
 
 
 @pytest.mark.parametrize('total_signatures', [3, 4, 8, 10])

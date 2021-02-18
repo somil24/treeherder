@@ -7,8 +7,8 @@ from django.db import transaction
 from taskcluster.exceptions import TaskclusterRestFailure
 
 from treeherder.perf.models import PerformanceSignature
-from ...perf.email import DeleteNotificationWriter
 from .max_runtime import MaxRuntime
+from ...perf.email import DeletionNotificationWriter, EmailWriter
 
 logger = logging.getLogger(__name__)
 
@@ -25,12 +25,13 @@ class PublicSignatureRemover:
         notify_client: taskcluster.Notify,
         max_rows_allowed=None,
         max_emails_allowed=None,
+        email_writer: EmailWriter = None,
     ):
         self._notify = notify_client
         self._max_rows_allowed = max_rows_allowed or 50
         self._max_emails_allowed = max_emails_allowed or 10
 
-        self.email_writer = DeleteNotificationWriter()
+        self._email_writer = email_writer or DeletionNotificationWriter()
         self.timer = timer
 
     def remove_in_chunks(self, signatures):
@@ -61,7 +62,8 @@ class PublicSignatureRemover:
         if emails_sent < self._max_emails_allowed and chunk_of_signatures != []:
             self.__delete_and_notify(chunk_of_signatures)
 
-    def _remove_empty_try_signatures(self, signatures):
+    @staticmethod
+    def _remove_empty_try_signatures(signatures):
         try_signatures = signatures.filter(repository__name='try')
         for perf_signature in try_signatures:
             if not perf_signature.has_performance_data():
@@ -81,7 +83,7 @@ class PublicSignatureRemover:
             signature.delete()
 
     def _send_email(self):
-        self._notify.email(self.email_writer.email)
+        self._notify.email(self._email_writer.email)
 
     def __delete_and_notify(self, signatures: List[PerformanceSignature]) -> bool:
         """
@@ -103,4 +105,4 @@ class PublicSignatureRemover:
         return True
 
     def _prepare_notification(self, signatures: List[PerformanceSignature]):
-        self.email_writer.prepare_new_email(signatures)
+        self._email_writer.prepare_new_email(signatures)
