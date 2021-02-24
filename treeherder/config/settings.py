@@ -478,4 +478,4 @@ NOTIFY_ACCESS_TOKEN = env('NOTIFY_ACCESS_TOKEN', default=None)
 # https://github.com/settings/tokens
 GITHUB_TOKEN = env("GITHUB_TOKEN", default=None)
 
-MOZCI_CONFIG_PATH = env("MOZCI_CONFIG_PATH", default="config.toml")
+MOZCI_CONFIG_PATH = env("MOZCI_CONFIG_PATH", default="mozci_config.toml")

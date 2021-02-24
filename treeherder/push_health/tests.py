@@ -115,7 +115,6 @@ def get_test_failures(push, failed_jobs, likely_regression_labels):
         'job_log__job__machine_platform',
         'job_log__job__taskcluster_metadata',
     )
-    print('Found {} failure lines'.format(len(failure_lines)))
     # using a dict here to avoid duplicates due to multiple failure_lines for
     # each job.
     regressions = {
@@ -129,7 +128,6 @@ def get_test_failures(push, failed_jobs, likely_regression_labels):
     investigatedTests = InvestigatedTests.objects.filter(push=push)
     # Keep track of these so that we can add them to the 'otherJobs'
     labels_without_failure_lines = failed_job_labels.copy()
-    # print('regression labels in tests {}'.format(likely_regression_labels))
 
     for failure_line in failure_lines:
         test_name = clean_test(failure_line.test, failure_line.signature, failure_line.message)
